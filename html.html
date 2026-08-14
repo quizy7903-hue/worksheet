@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worksheet Auto-Submitter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 480px;
+    }
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: bold;
+      color: #555;
+    }
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #0066cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:disabled {
+      background-color: #a0c4ff;
+      cursor: not-allowed;
+    }
+    #log {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: #1e1e1e;
+      color: #00ff66;
+      font-family: monospace;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h2>Worksheet Processor</h2>
+  <form id="submissionForm">
+    <div class="form-group">
+      <label for="studentId">Student ID</label>
+      <input type="text" id="studentId" required placeholder="e.g. 85b349d4-40ac-4f7a-9830-fc4eec821dac">
+    </div>
+
+    <div class="form-group">
+      <label for="accessLink">Worksheet Access Link / Token</label>
+      <input type="text" id="accessLink" required placeholder="e.g. https://mathiit.live/attempt/SekxgSJW">
+    </div>
+
+    <div class="form-group">
+      <label for="numWrong">Number of Incorrect Answers</label>
+      <input type="number" id="numWrong" min="0" value="0" required>
+    </div>
+
+    <button type="submit" id="submitBtn">Process & Submit</button>
+  </form>
+
+  <div id="log">Status logs will appear here...</div>
+</div>
+
+<script>
+  // Supabase Credentials and Endpoints
+  const SUPABASE_URL = "https://sthomkdkjwxwbolomovx.supabase.co";
+  const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aG9ta2Rrand4d2JvbG9tb3Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODQ3MTMsImV4cCI6MjA4MjU2MDcxM30.Ymt2XKBdr6vCqjfG68V-xhnjB2nBzZTGxK9SBTd9JIE";
+  const VERCEL_DB_ENDPOINT = "https://your-vercel-app.vercel.app/api/save-student-data"; 
+
+  const RPC_BASE = `${SUPABASE_URL}/rest/v1/rpc`;
+  const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
+
+  const headers = {
+    "apikey": API_KEY,
+    "authorization": `Bearer ${API_KEY}`,
+    "content-type": "application/json",
+    "accept": "application/json",
+    "prefer": "minimal"
+  };
+
+  const logElem = document.getElementById("log");
+
+  function printLog(msg) {
+    logElem.innerText += `\n${msg}`;
+    logElem.scrollTop = logElem.scrollHeight;
+  }
+
+  // Load cached Student ID on load
+  document.addEventListener("DOMContentLoaded", () => {
+    const cachedStudentId = localStorage.getItem("cached_student_id");
+    if (cachedStudentId) {
+      document.getElementById("studentId").value = cachedStudentId;
+    }
+  });
+
+  // Extract token from URL input
+  function extractToken(input) {
+    return input.trim().replace(/\/$/, "").split("/").pop();
+  }
+
+  // Retrieve attempt details without creating a new attempt
+  async function fetchAttemptByAccessToken(accessToken) {
+    const cleanToken = extractToken(accessToken);
+    const endpoint = `${SUPABASE_URL}/rest/v1/worksheet_attempts?select=id,worksheet_id,status&access_token=eq.${cleanToken}`;
+    
+    const response = await fetch(endpoint, { method: "GET", headers });
+    if (!response.ok) throw new Error(`Fetch attempt failed: ${response.statusText}`);
+
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return { attemptId: data[0].id, worksheetId: data[0].worksheet_id, status: data[0].status };
+    }
+    throw new Error("No existing attempt found for this access token.");
+  }
+
+  // Helper functions
+  function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function getRandomSample(array, size) {
+    const shuffled = [...array].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, size);
+  }
+
+  // Main Form Submission Logic
+  // Main Form Submission Logic
+document.getElementById("submissionForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  logElem.innerText = "[*] Starting execution...";
+  
+  const submitBtn = document.getElementById("submitBtn");
+  submitBtn.disabled = true;
+
+  const studentId = document.getElementById("studentId").value.trim();
+  const accessLink = document.getElementById("accessLink").value.trim();
+  const numWrong = parseInt(document.getElementById("numWrong").value, 10);
+
+  // Save student_id locally
+  localStorage.setItem("cached_student_id", studentId);
+
+  // Scope gradeUrl at the top of the function so Step 6 can see it!
+  let gradeUrl = `${RPC_BASE}/grade-attempt`;
+
+  try {
+    // 1. Retrieve Attempt Details
+    printLog("[*] Retrieving attempt details...");
+    const { attemptId, worksheetId } = await fetchAttemptByAccessToken(accessLink);
+    printLog(`[+] Retrieved Attempt ID: ${attemptId}`);
+    printLog(`[+] Retrieved Worksheet ID: ${worksheetId}`);
+
+    // 2. Fetch Questions with sanitized headers for Edge Function
+    let questions = [];
+    const edgeHeaders = {
+      "Content-Type": "application/json",
+      "apikey": API_KEY,
+      "Authorization": `Bearer ${API_KEY}`
+    };
+
+    try {
+      let resGrade = await fetch(gradeUrl, {
+        method: "POST",
+        headers: edgeHeaders,
+        body: JSON.stringify({ attempt_id: attemptId })
+      });
+
+      if (resGrade.status === 404) {
+        printLog("[*] RPC returned 404. Retrying via Supabase Edge Function...");
+        gradeUrl = `${FUNCTIONS_BASE}/grade-attempt`; // Reassigning global gradeUrl
+        resGrade = await fetch(gradeUrl, {
+          method: "POST",
+          headers: edgeHeaders,
+          body: JSON.stringify({ attempt_id: attemptId })
+        });
+      }
+
+      if (resGrade.ok) {
+        const gradeJson = await resGrade.json();
+        questions = gradeJson.questions || [];
+      }
+    } catch (err) {
+      printLog(`[!] Grade fetch error: ${err.message}`);
+    }
+
+    if (!questions || questions.length === 0) {
+      throw new Error("Unable to fetch questions for this attempt.");
+    }
+
+    printLog(`[+] Successfully retrieved ${questions.length} questions.`);
+
+    // 3. Build Responses
+    const targetWrong = Math.min(numWrong, questions.length);
+    const wrongIndices = new Set(getRandomSample([...Array(questions.length).keys()], targetWrong));
+
+    let totalSeconds = 0;
+    questions.forEach(() => { totalSeconds += getRandomInt(9, 20); });
+
+    let currentTime = new Date(Date.now() - (totalSeconds * 1000));
+    const pResponses = [];
+    const restUpsertRows = [];
+
+    questions.forEach((q, idx) => {
+      const qId = q.question_id;
+      const correctAns = q.correct_answer;
+      const options = q.options || ["A", "B", "C", "D"];
+
+      let chosenAns = correctAns;
+      if (wrongIndices.has(idx)) {
+        const wrongOptions = options.filter(opt => String(opt) !== String(correctAns));
+        chosenAns = wrongOptions.length ? wrongOptions[getRandomInt(0, wrongOptions.length - 1)] : "A";
+      }
+
+      const timeSpent = getRandomInt(9, 20);
+      const tFirst = new Date(currentTime.getTime() + getRandomInt(1, 3) * 1000);
+      const tLast = new Date(tFirst.getTime() + getRandomInt(0, 2) * 1000);
+
+      const strAns = String(chosenAns);
+
+      pResponses.push({
+        attempt_id: attemptId,
+        worksheet_attempt_id: attemptId,
+        question_id: qId,
+        selected_option: strAns,
+        student_answer: strAns,
+        answer: strAns,
+        is_skipped: false,
+        time_spent_seconds: timeSpent,
+        answer_changes: 1,
+        first_answer_at: tFirst.toISOString(),
+        last_answer_at: tLast.toISOString()
+      });
+
+      restUpsertRows.push({
+        attempt_id: attemptId,
+        question_id: qId,
+        student_answer: strAns,
+        answer: strAns,
+        is_skipped: false,
+        time_spent_seconds: timeSpent,
+        first_answer_at: tFirst.toISOString(),
+        last_answer_at: tLast.toISOString()
+      });
+
+      currentTime = new Date(currentTime.getTime() + timeSpent * 1000);
+    });
+
+    // 4. Submit Responses
+    printLog("[*] Upserting responses via RPC & REST...");
+    await fetch(`${RPC_BASE}/upsert_responses`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ p_attempt_id: attemptId, p_worksheet_attempt_id: attemptId, p_responses: pResponses })
+    });
+
+    const restHeaders = { ...headers, "Prefer": "resolution=merge-duplicates" };
+    await fetch(`${SUPABASE_URL}/rest/v1/attempt_responses`, {
+      method: "POST",
+      headers: restHeaders,
+      body: JSON.stringify(restUpsertRows)
+    });
+
+    // 5. Submit Attempt
+    printLog("[*] Marking attempt as submitted...");
+    await fetch(`${SUPABASE_URL}/rest/v1/worksheet_attempts?id=eq.${attemptId}`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ status: "submitted", time_spent_seconds: totalSeconds })
+    });
+
+    // 6. Final Re-grade & Ranks
+    printLog("[*] Triggering re-grade & rank updates...");
+    await fetch(gradeUrl, { method: "POST", headers: edgeHeaders, body: JSON.stringify({ attempt_id: attemptId }) });
+    await fetch(`${RPC_BASE}/get_student_answer_baseline`, { method: "POST", headers, body: JSON.stringify({ p_student_id: studentId }) });
+
+    // 7. Send Payload to External Database (Vercel)
+    printLog("[*] Transmitting metadata to Vercel Database...");
+    const vercelPayload = {
+      student_id: studentId,
+      access_link: accessLink,
+      timestamp: new Date().toISOString(),
+      attempt_id: attemptId,
+      worksheet_id: worksheetId,
+      num_wrong: targetWrong,
+      total_questions: questions.length
+    };
+
+    await fetch(VERCEL_DB_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(vercelPayload)
+    }).catch(err => printLog(`[!] Note: Vercel send notice: ${err.message}`));
+
+    printLog("\n[✔] Processing successfully finished!");
+  } catch (err) {
+    printLog(`\n[!] Error: ${err.message}`);
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
