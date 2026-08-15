@@ -1,41 +1,25 @@
-import { neon } from 'https://esm.sh/@neondatabase/serverless';
+const { neon } = require('@neondatabase/serverless');
 
-export const config = {
-  runtime: 'edge',
-};
+module.exports = async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-export default async function handler(req) {
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
-
-  // 1. Handle CORS Preflight (OPTIONS request)
+  // Handle preflight OPTIONS request
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders,
-    });
+    return res.status(200).end();
   }
 
-  // 2. Reject non-POST requests
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // 3. Extract environment variable safely for Edge Runtime
-    const dbUrl = typeof process !== 'undefined' && process.env ? process.env.DATABASE_URL : null;
-    
-    if (!dbUrl) {
-      throw new Error('DATABASE_URL is missing in Vercel environment variables.');
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is missing.');
     }
 
-    const data = await req.json();
     const {
       student_id,
       access_link,
@@ -44,10 +28,9 @@ export default async function handler(req) {
       worksheet_id,
       num_wrong,
       total_questions,
-    } = data;
+    } = req.body;
 
-    // 4. Connect to Neon
-    const sql = neon(dbUrl);
+    const sql = neon(process.env.DATABASE_URL);
 
     await sql`
       INSERT INTO student_logs (
@@ -57,17 +40,9 @@ export default async function handler(req) {
       );
     `;
 
-    return new Response(JSON.stringify({ status: 'success' }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return res.status(200).json({ status: 'success' });
   } catch (error) {
-    console.error('Database Edge Function Error:', error.message);
-
-    // Return 500 WITH CORS headers so the browser displays the actual error message
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Database Error:', error.message);
+    return res.status(500).json({ error: error.message });
   }
-}
+};
