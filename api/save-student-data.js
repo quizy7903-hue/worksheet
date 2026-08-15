@@ -5,14 +5,13 @@ export const config = {
 };
 
 export default async function handler(req) {
-  // Global CORS Headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
-  // 1. Handle OPTIONS preflight request immediately
+  // 1. Handle CORS Preflight (OPTIONS request)
   if (req.method === 'OPTIONS') {
     return new Response(null, {
       status: 204,
@@ -29,9 +28,11 @@ export default async function handler(req) {
   }
 
   try {
-    // 3. Verify Database URL existence
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL environment variable is missing in Vercel.');
+    // 3. Extract environment variable safely for Edge Runtime
+    const dbUrl = typeof process !== 'undefined' && process.env ? process.env.DATABASE_URL : null;
+    
+    if (!dbUrl) {
+      throw new Error('DATABASE_URL is missing in Vercel environment variables.');
     }
 
     const data = await req.json();
@@ -45,7 +46,8 @@ export default async function handler(req) {
       total_questions,
     } = data;
 
-    const sql = neon(process.env.DATABASE_URL);
+    // 4. Connect to Neon
+    const sql = neon(dbUrl);
 
     await sql`
       INSERT INTO student_logs (
@@ -60,9 +62,9 @@ export default async function handler(req) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Database Error:', error.message);
-    
-    // Return errors with CORS headers so the browser actually displays the server error message
+    console.error('Database Edge Function Error:', error.message);
+
+    // Return 500 WITH CORS headers so the browser displays the actual error message
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
