@@ -1,11 +1,25 @@
 import { neon } from 'https://esm.sh/@neondatabase/serverless';
 
-export default async function handler(req, res) {
-  // Support standard Vercel serverless request handling
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+export default async function handler(req) {
+  // CORS Headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Content-Type': 'application/json'
+  };
+
+  // Handle browser CORS preflight check
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+  }
 
   try {
+    const data = await req.json();
     const { 
       student_id, 
       access_link, 
@@ -14,7 +28,7 @@ export default async function handler(req, res) {
       worksheet_id, 
       num_wrong, 
       total_questions 
-    } = req.body;
+    } = data;
 
     const sql = neon(process.env.DATABASE_URL);
 
@@ -26,9 +40,8 @@ export default async function handler(req, res) {
       );
     `;
 
-    return res.status(200).json({ status: 'success' });
+    return new Response(JSON.stringify({ status: 'success' }), { status: 200, headers });
   } catch (error) {
-    console.error('Database insertion error:', error);
-    return res.status(500).json({ error: error.message });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
   }
 }
