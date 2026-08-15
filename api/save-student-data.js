@@ -1,19 +1,21 @@
+import { neon } from 'https://esm.sh/@neondatabase/serverless';
 
-import { neon } from '@neondatabase/serverless';
-
-export const config = {
-  runtime: 'edge',
-};
-
-export default async function handler(req) {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 200 });
-  if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
+export default async function handler(req, res) {
+  // Support standard Vercel serverless request handling
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const data = await req.json();
-    const { student_id, access_link, timestamp, attempt_id, worksheet_id, num_wrong, total_questions } = data;
+    const { 
+      student_id, 
+      access_link, 
+      timestamp, 
+      attempt_id, 
+      worksheet_id, 
+      num_wrong, 
+      total_questions 
+    } = req.body;
 
-    // Uses the DATABASE_URL auto-generated when you added Neon in Vercel
     const sql = neon(process.env.DATABASE_URL);
 
     await sql`
@@ -24,14 +26,9 @@ export default async function handler(req) {
       );
     `;
 
-    return new Response(JSON.stringify({ status: 'success' }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return res.status(200).json({ status: 'success' });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    console.error('Database insertion error:', error);
+    return res.status(500).json({ error: error.message });
   }
 }
