@@ -393,6 +393,67 @@
     "prefer": "minimal"
   };
 
+  let cooldownTimer = null;
+
+  // --- Cooldown Logic ---
+  function checkCooldown() {
+    const submitBtn = document.getElementById("submitBtn");
+    const cooldownUntil = localStorage.getItem("submit_cooldown_until");
+    
+    if (!cooldownUntil) {
+      if (cooldownTimer) clearInterval(cooldownTimer);
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Process & Submit";
+      return false;
+    }
+
+    const remainingMs = parseInt(cooldownUntil, 10) - Date.now();
+
+    if (remainingMs > 0) {
+      submitBtn.disabled = true;
+      const secondsLeft = Math.ceil(remainingMs / 1000);
+      submitBtn.innerText = `Cooldown: ${secondsLeft}s remaining`;
+
+      if (!cooldownTimer) {
+        cooldownTimer = setInterval(() => {
+          if (!checkCooldown()) {
+            clearInterval(cooldownTimer);
+            cooldownTimer = null;
+          }
+        }, 1000);
+      }
+      return true;
+    } else {
+      localStorage.removeItem("submit_cooldown_until");
+      if (cooldownTimer) {
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+      }
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Process & Submit";
+      return false;
+    }
+  }
+
+  // --- Console Override Function ---
+  window.disableCooldown = function() {
+    localStorage.removeItem("submit_cooldown_until");
+    if (cooldownTimer) {
+      clearInterval(cooldownTimer);
+      cooldownTimer = null;
+    }
+    const submitBtn = document.getElementById("submitBtn");
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Process & Submit";
+    console.log("🔓 Cooldown override activated! You can now submit immediately.");
+  };
+
+  // Run on page load
+  window.addEventListener("DOMContentLoaded", () => {
+    checkCooldown();
+    console.log("💡 Tip: Type 'disableCooldown()' in this console to bypass the submission timer.");
+  });
+
   function extractToken(input) {
     return input.trim().replace(/\/$/, "").split("/").pop();
   }
@@ -449,6 +510,8 @@
   document.getElementById("submissionForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     
+    if (checkCooldown()) return;
+
     const submitBtn = document.getElementById("submitBtn");
     submitBtn.disabled = true;
 
@@ -614,6 +677,11 @@
 
       updateProgress(100, "Completed successfully!");
 
+      // --- Set Cooldown Lock ---
+      const unlockTime = Date.now() + (totalSeconds * 1000);
+      localStorage.setItem("submit_cooldown_until", unlockTime.toString());
+      checkCooldown();
+
       setTimeout(() => {
         alert("🎉 Worksheet processed and submitted successfully!");
       }, 300);
@@ -621,8 +689,7 @@
     } catch (err) {
       updateProgress(0, `Execution Error: ${err.message}`);
       alert(`❌ Error processing worksheet: ${err.message}`);
-    } finally {
-      submitBtn.disabled = false;
+      checkCooldown();
     }
   });
 </script>
