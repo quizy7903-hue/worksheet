@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Payload Controller</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #3b82f6;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 { margin-bottom: 24px; font-size: 1.5rem; color: var(--accent); }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label { font-size: 0.85rem; color: var(--text-dim); }
+
+    input, select, textarea {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    textarea {
+      font-family: monospace;
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    button:hover { opacity: 0.9; }
+    button.secondary { background: #475569; }
+    button.success { background: var(--success); }
+
+    .payload-card {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-top: 12px;
+      background: #162032;
+    }
+
+    .payload-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .payload-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--border);
+    }
+
+    .status-badge.sent { background: var(--success); color: black; }
+    .status-badge.error { background: var(--danger); }
+
+    .checkbox-custom {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .fetch-status {
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+
+  <!-- Configuration Card -->
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Supabase Base Endpoint</label>
+        <input type="text" id="baseUrl" value="https://sthomkdkjwxwbolomovx.supabase.co">
+      </div>
+      <div class="form-group">
+        <label>API Key / Bearer Token</label>
+        <input type="text" id="apiKey" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aG9ta2Rrand4d2JvbG9tb3Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODQ3MTMsImV4cCI6MjA4MjU2MDcxM30.Ymt2XKBdr6vCqjfG68V-xhnjB2nBzZTGxK9SBTd9JIE">
+      </div>
+      <div class="form-group">
+        <label>Access Token (Optional - Auto-resolves IDs)</label>
+        <input type="text" id="accessToken" placeholder="Paste access token or token URL">
+        <div id="fetchStatus" class="fetch-status"></div>
+      </div>
+      <div class="form-group">
+
+        <label>Worksheet ID</label>
+
+        <input type="text" id="worksheetId" placeholder="Auto-fetched or enter manually">
+
+      </div> 
+      <div class="form-group">
+        <label>Attempt ID</label>
+        <input type="text" id="attemptId" placeholder="Auto-fetched or enter manually">
+      </div>
+      <div class="form-group">
+        <label>Student ID</label>
+        <input type="text" id="studentId" value="1fdd5726-543e-4f88-902a-e65a2044429b">
+      </div>
+      <div class="form-group">
+        <label>Wrong Answers Strategy</label>
+        <select id="numWrong">
+          <option value="0">0 Wrong Answers (100%)</option>
+          <option value="1">1 Wrong Answer</option>
+          <option value="2">2 Wrong Answers</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="actions">
+      <button class="secondary" onclick="resolveIdsFromToken()">Fetch Details from Token</button>
+      <button onclick="generatePayloads()">Generate Payloads</button>
+      <button class="success" onclick="executeSelected()">Send Selected Payloads</button>
+    </div>
+  </div>
+
+  <!-- Dynamic Payloads List -->
+  <div id="payloadList"></div>
+</div>
+
+<script>
+  let payloads = [];
+
+  const mockQuestions = [
+    { question_id: "q1", correct_answer: "A", options: ["A", "B", "C", "D"] },
+    { question_id: "q2", correct_answer: "B", options: ["A", "B", "C", "D"] },
+    { question_id: "q3", correct_answer: "C", options: ["A", "B", "C", "D"] }
+  ];
+
+  function getHeaders() {
+    const key = document.getElementById("apiKey").value;
+    return {
+      "apikey": key,
+      "authorization": `Bearer ${key}`,
+      "content-type": "application/json",
+      "accept": "application/json"
+    };
+  }
+
+  async function resolveIdsFromToken() {
+    const rawToken = document.getElementById("accessToken").value.trim();
+    if (!rawToken) return false;
+
+    const statusEl = document.getElementById("fetchStatus");
+    statusEl.innerText = "Resolving token details...";
+
+    // Clean rawToken if a full URL was pasted
+    const cleanToken = rawToken.replace(/\/$/, "").split("/").pop();
+    const baseUrl = document.getElementById("baseUrl").value.replace(/\/$/, "");
+    
+    const url = `${baseUrl}/rest/v1/worksheet_attempts?select=id,worksheet_id,student_id,status&access_token=eq.${cleanToken}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: getHeaders()
+      });
+
+      if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+
+      const data = await res.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        const item = data[0];
+        if (item.id) document.getElementById("attemptId").value = item.id;
+        if (item.worksheet_id) document.getElementById("worksheetId").value = item.worksheet_id;
+        if (item.student_id) document.getElementById("studentId").value = item.student_id;
+
+        statusEl.innerText = `[+] Resolved! Attempt: ${item.id.slice(0, 8)}... | Status: ${item.status || 'N/A'}`;
+        return true;
+      } else {
+        statusEl.innerText = "[!] Token query returned no records.";
+        return false;
+      }
+    } catch (err) {
+      statusEl.innerText = `[!] Error fetching via token: ${err.message}`;
+      return false;
+    }
+  }
+
+  async function generatePayloads() {
+    const rawToken = document.getElementById("accessToken").value.trim();
+    if (rawToken) {
+      await resolveIdsFromToken();
+    }
+
+    const attemptId = document.getElementById("attemptId").value.trim() || "sample-attempt-id";
+    const studentId = document.getElementById("studentId").value.trim();
+    const worksheetId = document.getElementById("worksheetId").value.trim();
+    const baseUrl = document.getElementById("baseUrl").value.replace(/\/$/, "");
+    const numWrong = parseInt(document.getElementById("numWrong").value, 10);
+
+    const wrongIndices = new Set();
+    while(wrongIndices.size < numWrong && wrongIndices.size < mockQuestions.length) {
+      wrongIndices.add(Math.floor(Math.random() * mockQuestions.length));
+    }
+
+    const p_responses = [];
+    const rest_upsert_rows = [];
+    let totalSeconds = 0;
+
+    mockQuestions.forEach((q, idx) => {
+      const isWrong = wrongIndices.has(idx);
+      const chosenAns = isWrong 
+        ? q.options.find(o => o !== q.correct_answer) || "A" 
+        : q.correct_answer;
+
+      const timeSpent = Math.floor(Math.random() * 11) + 9;
+      totalSeconds += timeSpent;
+
+      const now = new Date();
+      const tFirst = new Date(now.getTime() - (timeSpent * 1000)).toISOString();
+      const tLast = new Date(now.getTime() - ((timeSpent - 2) * 1000)).toISOString();
+
+      p_responses.push({
+        attempt_id: attemptId,
+        worksheet_attempt_id: attemptId,
+        question_id: q.question_id,
+        selected_option: String(chosenAns),
+        student_answer: String(chosenAns),
+        answer: String(chosenAns),
+        is_skipped: false,
+        time_spent_seconds: timeSpent,
+        answer_changes: 1,
+        first_answer_at: tFirst,
+        last_answer_at: tLast
+      });
+
+      rest_upsert_rows.push({
+        attempt_id: attemptId,
+        question_id: q.question_id,
+        student_answer: String(chosenAns),
+        answer: String(chosenAns),
+        is_skipped: false,
+        time_spent_seconds: timeSpent,
+        first_answer_at: tFirst,
+        last_answer_at: tLast
+      });
+    });
+
+    payloads = [
+      {
+        id: "step1",
+        name: "1. RPC Upsert Responses",
+        endpoint: `${baseUrl}/rest/v1/rpc/upsert_responses`,
+        method: "POST",
+        headers: getHeaders(),
+        data: { p_attempt_id: attemptId, p_worksheet_attempt_id: attemptId, p_responses: p_responses },
+        enabled: true
+      },
+      {
+        id: "step2",
+        name: "2. Direct Table Upsert",
+        endpoint: `${baseUrl}/rest/v1/attempt_responses`,
+        method: "POST",
+        headers: { ...getHeaders(), "Prefer": "resolution=merge-duplicates" },
+        data: rest_upsert_rows,
+        enabled: true
+      },
+      {
+        id: "step3",
+        name: "3. Mark Worksheet Attempt Submitted",
+        endpoint: `${baseUrl}/rest/v1/worksheet_attempts?id=eq.${attemptId}`,
+        method: "PATCH",
+        headers: getHeaders(),
+        data: { status: "submitted", time_spent_seconds: totalSeconds },
+        enabled: true
+      },
+      {
+        id: "step4",
+        name: "4. Student Ranks Baseline RPC",
+        endpoint: `${baseUrl}/rest/v1/rpc/get_student_worksheet_ranks`,
+        method: "POST",
+        headers: getHeaders(),
+        data: { p_student_id: studentId, p_session_token: null },
+        enabled: true
+      }
+    ];
+
+    renderPayloads();
+  }
+
+  function renderPayloads() {
+    const container = document.getElementById("payloadList");
+    container.innerHTML = "";
+
+    payloads.forEach((item, index) => {
+      const card = document.createElement("div");
+      card.className = "payload-card";
+      card.innerHTML = `
+        <div class="payload-header">
+          <div class="payload-title">
+            <input type="checkbox" class="checkbox-custom" ${item.enabled ? "checked" : ""} onchange="togglePayload(${index}, this.checked)">
+            <span>${item.name}</span>
+          </div>
+          <div>
+            <span id="badge-${item.id}" class="status-badge">Ready</span>
+            <button class="secondary" style="padding: 4px 10px; margin-left:8px;" onclick="sendSinglePayload(${index})">Send Direct</button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label>Endpoint Target</label>
+          <input type="text" value="${item.endpoint}" onchange="updateEndpoint(${index}, this.value)">
+        </div>
+        <div class="form-group">
+          <label>JSON Body</label>
+          <textarea onchange="updateData(${index}, this.value)">${JSON.stringify(item.data, null, 2)}</textarea>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function togglePayload(index, checked) {
+    payloads[index].enabled = checked;
+  }
+
+  function updateEndpoint(index, value) {
+    payloads[index].endpoint = value;
+  }
+
+  function updateData(index, value) {
+    try {
+      payloads[index].data = JSON.parse(value);
+    } catch (e) {
+      alert("Invalid JSON format");
+    }
+  }
+
+  async function sendSinglePayload(index) {
+    const item = payloads[index];
+    const badge = document.getElementById(`badge-${item.id}`);
+    badge.className = "status-badge";
+    badge.innerText = "Sending...";
+
+    try {
+      const res = await fetch(item.endpoint, {
+        method: item.method,
+        headers: item.headers,
+        body: JSON.stringify(item.data)
+      });
+
+      if (res.ok) {
+        badge.className = "status-badge sent";
+        badge.innerText = `Success (${res.status})`;
+      } else {
+        badge.className = "status-badge error";
+        badge.innerText = `Failed (${res.status})`;
+      }
+    } catch (err) {
+      badge.className = "status-badge error";
+      badge.innerText = "Error";
+    }
+  }
+
+  async function executeSelected() {
+    for (let i = 0; i < payloads.length; i++) {
+      if (payloads[i].enabled) {
+        await sendSinglePayload(i);
+      }
+    }
+  }
+
+  generatePayloads();
+</script>
+
+</body>
+</html>
