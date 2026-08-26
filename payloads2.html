@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supabase Range & Filter Data Extractor</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #3b82f6;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --border: #334155;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --code-bg: #090d16;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    h1 { margin: 0 0 20px 0; font-size: 1.5rem; color: var(--accent); }
+    h2 { margin: 0 0 14px 0; font-size: 1.1rem; color: var(--text); }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label { font-size: 0.82rem; color: var(--text-dim); font-weight: 600; }
+
+    input, select {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.88rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    button:hover { opacity: 0.9; }
+    button.success { background: var(--success); }
+    button.secondary { background: #475569; }
+
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: var(--border);
+      color: var(--text-dim);
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .status-badge.sent { background: var(--success); color: black; font-weight: bold; }
+    .status-badge.error { background: var(--danger); color: white; font-weight: bold; }
+
+    .response-output {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      color: #3ecf8e;
+      padding: 14px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Supabase Table Inspector & JSON Exporter</h1>
+
+  <!-- API Connection Config -->
+  <div class="card">
+    <h2>1. Connection Settings</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Supabase Endpoint URL</label>
+        <input type="text" id="baseUrl" value="https://sthomkdkjwxwbolomovx.supabase.co">
+      </div>
+      <div class="form-group">
+        <label>API Key (Anon / Service Role)</label>
+        <input type="text" id="apiKey" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aG9ta2Rrand4d2JvbG9tb3Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODQ3MTMsImV4cCI6MjA4MjU2MDcxM30.Ymt2XKBdr6vCqjfG68V-xhnjB2nBzZTGxK9SBTd9JIE">
+      </div>
+      <div class="form-group">
+        <label>Target Table Name</label>
+        <input type="text" id="tableName" value="error_logs">
+      </div>
+    </div>
+  </div>
+
+  <!-- Retrieval Modes -->
+  <div class="card">
+    <h2>2. Query Controls</h2>
+    <div class="form-grid">
+      <!-- Range Options -->
+      <div class="form-group">
+        <label>Range Start Index</label>
+        <input type="number" id="rangeStart" value="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Range End Index</label>
+        <input type="number" id="rangeEnd" value="9" min="0">
+      </div>
+      
+      <!-- Parameter Filter Options -->
+      <div class="form-group">
+        <label>Filter Column</label>
+        <input type="text" id="filterCol" placeholder="e.g. student_id">
+      </div>
+      <div class="form-group">
+        <label>Filter Operator</label>
+        <select id="filterOp">
+          <option value="eq">Equals (eq)</option>
+          <option value="neq">Not Equal (neq)</option>
+          <option value="gt">Greater Than (gt)</option>
+          <option value="lt">Less Than (lt)</option>
+          <option value="ilike">Matches Pattern (ilike)</option>
+          <option value="is">Is Null/True/False (is)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Filter Value</label>
+        <input type="text" id="filterVal" placeholder="e.g. a3d90de0-ccff-44f2...">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button onclick="fetchByRange()">Retrieve Range Mode</button>
+      <button onclick="fetchByParameter()">Retrieve Filter Parameter Mode</button>
+      <button class="secondary" onclick="fetchCount()">Get Total Row Count</button>
+    </div>
+  </div>
+
+  <!-- Output Panel -->
+  <div class="card">
+    <div class="header-flex">
+      <h2>3. Received Data Output</h2>
+      <button class="success" id="exportBtn" onclick="exportJSON()" disabled>Export JSON File</button>
+    </div>
+    <div>
+      <span id="statusBadge" class="status-badge">Idle</span>
+    </div>
+    <div class="response-output" id="outputConsole">// Results log here and directly to Browser Console (F12)...</div>
+  </div>
+</div>
+
+<script>
+  let lastFetchedData = null;
+
+  function getHeaders(customHeaders = {}) {
+    const key = document.getElementById("apiKey").value.trim();
+    return {
+      "apikey": key,
+      "authorization": `Bearer ${key}`,
+      "content-type": "application/json",
+      "accept": "application/json",
+      ...customHeaders
+    };
+  }
+
+  function getBaseEndpoint() {
+    const baseUrl = document.getElementById("baseUrl").value.replace(/\/$/, "");
+    const table = document.getElementById("tableName").value.trim();
+    return `${baseUrl}/rest/v1/${table}`;
+  }
+
+  function updateStatus(message, type = '') {
+    const badge = document.getElementById("statusBadge");
+    badge.className = `status-badge ${type}`;
+    badge.innerText = message;
+  }
+
+  function renderOutput(data) {
+    const outputEl = document.getElementById("outputConsole");
+    outputEl.textContent = JSON.stringify(data, null, 2);
+    
+    // Direct log to developer console
+    console.log("[Supabase Output Received]:", data);
+
+    // Enable JSON download if data exists
+    lastFetchedData = data;
+    document.getElementById("exportBtn").disabled = !data;
+  }
+
+  // Range Mode Execution
+  async function fetchByRange() {
+    const endpoint = getBaseEndpoint();
+    const start = document.getElementById("rangeStart").value;
+    const end = document.getElementById("rangeEnd").value;
+
+    const headers = getHeaders({ "Range": `${start}-${end}` });
+    const fullUrl = `${endpoint}?select=*`;
+
+    updateStatus("Fetching Range...", "sent");
+    console.log(`[HTTP GET Range ${start}-${end}] ${fullUrl}`);
+
+    try {
+      const res = await fetch(fullUrl, { method: "GET", headers });
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+
+      updateStatus(`Success (${data.length || 0} rows retrieved)`, "sent");
+      renderOutput(data);
+    } catch (err) {
+      updateStatus(`Error: ${err.message}`, "error");
+      renderOutput({ error: err.message });
+    }
+  }
+
+  // Filtered Parameter Mode Execution
+  async function fetchByParameter() {
+    const endpoint = getBaseEndpoint();
+    const col = document.getElementById("filterCol").value.trim();
+    const op = document.getElementById("filterOp").value;
+    const val = document.getElementById("filterVal").value.trim();
+
+    if (!col || !val) {
+      alert("Please provide both a Filter Column and a Filter Value.");
+      return;
+    }
+
+    const query = `${encodeURIComponent(col)}=${op}.${encodeURIComponent(val)}`;
+    const fullUrl = `${endpoint}?select=*&${query}`;
+
+    updateStatus("Fetching Filtered Data...", "sent");
+    console.log(`[HTTP GET Filter] ${fullUrl}`);
+
+    try {
+      const res = await fetch(fullUrl, { method: "GET", headers: getHeaders() });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+
+      updateStatus(`Success (${data.length || 0} rows retrieved)`, "sent");
+      renderOutput(data);
+    } catch (err) {
+      updateStatus(`Error: ${err.message}`, "error");
+      renderOutput({ error: err.message });
+    }
+  }
+
+  // Count Mode Execution
+  async function fetchCount() {
+    const endpoint = getBaseEndpoint();
+    const fullUrl = `${endpoint}?select=*&limit=1`;
+    const headers = getHeaders({ "Prefer": "count=exact" });
+
+    updateStatus("Fetching Count...", "sent");
+    console.log(`[HTTP HEAD/GET Count] ${fullUrl}`);
+
+    try {
+      const res = await fetch(fullUrl, { method: "GET", headers });
+      const contentRange = res.headers.get("content-range");
+      const totalCount = contentRange ? contentRange.split('/')[1] : "Unknown";
+
+      updateStatus(`Total Rows: ${totalCount}`, "sent");
+      renderOutput({ table: document.getElementById("tableName").value, total_count: totalCount });
+    } catch (err) {
+      updateStatus(`Error: ${err.message}`, "error");
+      renderOutput({ error: err.message });
+    }
+  }
+
+  // Export Data to JSON File
+  function exportJSON() {
+    if (!lastFetchedData) return;
+
+    const tableName = document.getElementById("tableName").value.trim() || "supabase_data";
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastFetchedData, null, 2));
+    
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `${tableName}_export_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+</script>
+
+</body>
+</html>
