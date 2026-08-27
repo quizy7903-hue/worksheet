@@ -611,7 +611,6 @@
           question_id: qId,
           selected_option: strAns,
           student_answer: strAns,
-          
           is_skipped: false,
           time_spent_seconds: timeSpent,
           answer_changes: 1,
@@ -623,7 +622,6 @@
           attempt_id: attemptId,
           question_id: qId,
           student_answer: strAns,
-          answer: strAns,
           is_skipped: false,
           time_spent_seconds: timeSpent,
           first_answer_at: tFirst.toISOString(),
@@ -638,7 +636,9 @@
       await fetch(`${RPC_BASE}/upsert_responses`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ p_attempt_id: attemptId, p_worksheet_attempt_id: attemptId, p_responses: pResponses })
+        body: JSON.stringify({ 
+          p_responses: pResponses 
+        })
       });
 
       const restHeaders = { ...headers, "Prefer": "resolution=merge-duplicates" };
