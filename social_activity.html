@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>One India, Great India - Ultra-Reliable 3D World</title>
+    <title>One India, Great India - Ultra-Fast CSS 3D World</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Fonts & FontAwesome -->
+    <!-- Google Fonts & FontAwesome Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Three.js & OrbitControls -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-
     <style>
         * {
-            touch-action: manipulation;
+            touch-action: none; /* Custom touch inertia handler */
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -29,13 +25,13 @@
             padding: 0;
             overflow: hidden;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f1f5f9; /* Bright slate background */
+            background: radial-gradient(circle at center, #f8fafc 0%, #e2e8f0 100%);
             color: #0f172a;
             user-select: none;
             -webkit-user-select: none;
         }
 
-        /* Glassmorphism Navigation Bar */
+        /* Glassmorphism Header Bar */
         .glass-panel {
             background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(16px);
@@ -59,7 +55,7 @@
         }
 
         .btn-action:active:not(:disabled) {
-            transform: scale(0.96);
+            transform: scale(0.95);
             background: #f1f5f9;
         }
 
@@ -70,22 +66,94 @@
             box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
         }
 
-        /* WebGL Canvas */
-        #webgl-canvas {
+        /* CSS 3D Hardware Accelerated Viewport */
+        #viewport {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100vw;
             height: 100vh;
+            perspective: 1200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
             z-index: 1;
-            outline: none;
+        }
+
+        #world_3d {
+            position: relative;
+            width: 320px;
+            height: 452px; /* Standard A4 proportions */
+            transform-style: preserve-3d;
+            will-change: transform;
+            cursor: grab;
+        }
+
+        #world_3d:active {
+            cursor: grabbing;
+        }
+
+        @media (min-width: 640px) {
+            #world_3d {
+                width: 400px;
+                height: 565px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            #world_3d {
+                width: 460px;
+                height: 650px;
+            }
+        }
+
+        /* 3D Paper Layer Styling */
+        .paper-layer {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            will-change: transform;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .paper-layer img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Base Page Realistic Shadow and Background */
+        #layer_base {
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 
+                0 20px 40px -10px rgba(15, 23, 42, 0.18),
+                0 10px 15px -5px rgba(15, 23, 42, 0.08),
+                0 0 0 1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Floating Layer Shadows */
+        #layer_middle {
+            filter: drop-shadow(0 16px 16px rgba(15, 23, 42, 0.18));
+        }
+
+        #layer_top {
+            filter: drop-shadow(0 24px 22px rgba(15, 23, 42, 0.22));
         }
 
         /* Loading Spinner */
         .spinner {
             border: 3px solid #e2e8f0;
-            border-top: 3px solid #ea580c; /* Tiranga Orange */
-            border-right: 3px solid #16a34a; /* Tiranga Green */
+            border-top: 3px solid #ea580c;
+            border-right: 3px solid #16a34a;
             border-radius: 50%;
             width: 42px;
             height: 42px;
@@ -111,20 +179,20 @@
             <h2 class="text-base font-bold font-serif text-slate-900 tracking-tight">
                 One India, Great India
             </h2>
-            <p class="text-xs text-slate-500 mt-1 mb-4 font-medium">Preparing Bright 3D Scene...</p>
+            <p class="text-xs text-slate-500 mt-1 mb-4 font-medium">Optimizing CSS 3D Layers...</p>
 
             <!-- Progress Bar -->
             <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden border border-slate-300">
                 <div id="loading-bar" class="bg-gradient-to-r from-orange-500 via-slate-600 to-emerald-600 h-full w-0 transition-all duration-300"></div>
             </div>
-            <span id="loading-text" class="text-[11px] text-slate-500 mt-2 font-mono">0 / 3 Textures Loaded</span>
+            <span id="loading-text" class="text-[11px] text-slate-500 mt-2 font-mono">0 / 3 Images Processed</span>
         </div>
     </div>
 
-    <!-- Top Navigation Controls -->
+    <!-- Top Navigation Controls Bar -->
     <header class="fixed top-3 left-3 right-3 z-30 flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-2xl glass-panel">
         
-        <!-- Left: Branding -->
+        <!-- Left: Project Title -->
         <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-orange-500 via-white to-emerald-600 p-[2px] shadow-sm flex-shrink-0">
                 <div class="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
@@ -135,11 +203,11 @@
                 <h1 class="font-bold text-xs sm:text-sm font-serif tracking-wide text-slate-900">
                     One India, Great India
                 </h1>
-                <p class="text-[9px] sm:text-[10px] text-slate-500 font-medium leading-none">3D Interactive Paper Viewer</p>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 font-medium leading-none">Ultra-Fast 3D Document</p>
             </div>
         </div>
 
-        <!-- Center: Minimal Page Switcher -->
+        <!-- Center: Minimal Page Control -->
         <div class="flex items-center gap-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 shadow-inner">
             <button id="btn-prev" class="btn-action w-8 h-8 rounded-lg flex items-center justify-center opacity-40 cursor-not-allowed text-slate-400" disabled title="Previous Page">
                 <i class="fa-solid fa-chevron-left text-xs"></i>
@@ -152,7 +220,7 @@
             </button>
         </div>
 
-        <!-- Right: View Modes -->
+        <!-- Right: View Preset Buttons -->
         <div class="flex items-center gap-1">
             <button id="btn-top" class="btn-action px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5">
                 <i class="fa-solid fa-arrows-to-dot text-orange-600 text-xs"></i>
@@ -162,171 +230,93 @@
                 <i class="fa-solid fa-cube text-emerald-600 text-xs"></i>
                 <span class="hidden md:inline">3D View</span>
             </button>
-            <button id="btn-reset" class="btn-action w-8 h-8 rounded-xl flex items-center justify-center" title="Reset View">
+            <button id="btn-reset" class="btn-action w-8 h-8 rounded-xl flex items-center justify-center" title="Reset Camera">
                 <i class="fa-solid fa-rotate-left text-xs"></i>
             </button>
         </div>
     </header>
 
-    <!-- Bottom Interaction Hint -->
+    <!-- Bottom Touch Interaction Hint -->
     <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2 rounded-full text-[11px] text-slate-700 flex items-center gap-2.5 shadow-lg pointer-events-none whitespace-nowrap max-w-[90vw] overflow-hidden">
         <span class="flex items-center gap-1 text-orange-600 font-semibold">
-            <i class="fa-solid fa-hand-pointer animate-pulse"></i> Drag to rotate
+            <i class="fa-solid fa-hand-pointer animate-pulse"></i> Touch & Drag to Orbit
         </span>
         <span class="text-slate-300">•</span>
         <span class="text-emerald-700 flex items-center gap-1 font-semibold">
-            <i class="fa-solid fa-up-down text-xs"></i> Tilt for 3D depth
+            <i class="fa-solid fa-up-down text-xs"></i> Tilt for 3D Layer Explosion
         </span>
     </div>
 
-    <!-- WebGL Canvas -->
-    <canvas id="webgl-canvas"></canvas>
+    <!-- Hardware Accelerated CSS 3D Viewport -->
+    <div id="viewport">
+        <div id="world_3d">
+            <!-- Base Layer: Main Sheet -->
+            <div id="layer_base" class="paper-layer">
+                <img id="img_base" alt="Base Sheet">
+            </div>
+
+            <!-- Middle Layer: Scenic Collage -->
+            <div id="layer_middle" class="paper-layer">
+                <img id="img_middle" alt="Scenic Collage">
+            </div>
+
+            <!-- Top Layer: India Map -->
+            <div id="layer_top" class="paper-layer">
+                <img id="img_top" alt="India Map">
+            </div>
+        </div>
+    </div>
 
     <script>
-        
-        // Exact target filenames in current directory
+        // Local file configuration matching directory structure
         const IMAGE_FILES = {
             base: 'social front page 2.png',
             middle: 'social front page 3.png',
             top: 'social front page india image.png'
         };
 
-        let scene, camera, renderer, controls;
-        let baseMesh, middleMesh, topMesh;
+        // 3D Transform State with Inertia / Lerp Physics
+        const state = {
+            rotX: 42,        // Tilt angle in degrees
+            rotY: -18,       // Orbit angle in degrees
+            scale: 0.95,     // Zoom level
+            panX: 0,         // Horizontal pan offset
+            panY: 0,         // Vertical pan offset
+            
+            // Targets for smooth lerping
+            targetRotX: 42,
+            targetRotY: -18,
+            targetScale: 0.95,
+            targetPanX: 0,
+            targetPanY: 0,
 
-        // Dynamic 3D vertical separation state
-        const explosionState = {
-            maxGap: 0.85,
-            currentGap: 0.4
+            // Vertical separation gap config (in pixels)
+            maxZGap: 80,
+            currentZGap: 0
         };
 
         let loadedCount = 0;
         const TOTAL_LAYERS = 3;
 
-        window.addEventListener('load', () => {
-            initScene();
-            loadAllPaperLayers();
-            setupControls();
-            renderLoop();
-        });
-
-        function initScene() {
-            const canvas = document.getElementById('webgl-canvas');
-
-            // 1. Scene Setup - BRIGHT STUDIO ENVIRONMENT
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xf8fafc); // Bright Slate-50 background
-            scene.fog = new THREE.FogExp2(0xf8fafc, 0.05);
-
-            // 2. Camera Setup
-            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50);
-            updateCameraPosition();
-
-            // 3. High Performance Renderer
-            const pixelRatioCap = Math.min(window.devicePixelRatio, 2);
-            renderer = new THREE.WebGLRenderer({
-                canvas: canvas,
-                antialias: true,
-                alpha: false,
-                powerPreference: 'high-performance'
-            });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(pixelRatioCap);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            renderer.outputEncoding = THREE.sRGBEncoding;
-
-            // 4. OrbitControls with full touch & gesture support
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.08;
-            controls.maxPolarAngle = Math.PI / 2 - 0.02; // Don't go below ground
-            controls.minDistance = 1.2;
-            controls.maxDistance = 10;
-            controls.target.set(0, 0, 0);
-
-            // 5. Bright Studio Lighting Environment (NO BLACK SCENES)
-            // High intensity ambient light guarantees base illumination even if shadows fail
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
-            scene.add(ambientLight);
-
-            // Bright Key Directional Light for rich soft shadows
-            const keyLight = new THREE.DirectionalLight(0xfffaed, 1.2);
-            keyLight.position.set(3, 8, 4);
-            keyLight.castShadow = true;
-            keyLight.shadow.mapSize.width = 1024;
-            keyLight.shadow.mapSize.height = 1024;
-            keyLight.shadow.camera.near = 0.5;
-            keyLight.shadow.camera.far = 15;
-            keyLight.shadow.camera.left = -2.5;
-            keyLight.shadow.camera.right = 2.5;
-            keyLight.shadow.camera.top = 2.5;
-            keyLight.shadow.camera.bottom = -2.5;
-            keyLight.shadow.bias = -0.0002;
-            scene.add(keyLight);
-
-            // Soft Fill Light from opposite side
-            const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.7);
-            fillLight.position.set(-3, 5, -3);
-            scene.add(fillLight);
-
-            // Studio Floor Plane with soft grid
-            const floorGeo = new THREE.PlaneGeometry(20, 20);
-            const floorMat = new THREE.MeshStandardMaterial({
-                color: 0xe2e8f0,
-                roughness: 0.9,
-                metalness: 0.05
-            });
-            const floor = new THREE.Mesh(floorGeo, floorMat);
-            floor.rotation.x = -Math.PI / 2;
-            floor.position.y = -0.01;
-            floor.receiveShadow = true;
-            scene.add(floor);
-
-            const grid = new THREE.GridHelper(16, 32, 0xcbd5e1, 0xe2e8f0);
-            grid.position.y = 0;
-            scene.add(grid);
-
-            window.addEventListener('resize', onWindowResize);
-        }
-
-
         /**
-         * Cross-platform Image Loader & Canvas 2D Chroma-Key Processor.
-         * Runs fast on mobile without unstable custom WebGL GLSL shader compile hacks.
+         * Fast 2D Canvas processor to remove dark backgrounds on load.
+         * Runs once during startup and creates standard transparent image URLs.
          */
-        function processImageWithCanvas2D(imageSrc, options = {}) {
+        function processImageChromaKey(src, options = {}) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
 
                 img.onload = () => {
-                    // Mobile GPU Memory Protection: Cap max texture dimension to 2048px
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 2048;
-
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = Math.round((height * maxDim) / width);
-                            width = maxDim;
-                        } else {
-                            width = Math.round((width * maxDim) / height);
-                            height = maxDim;
-                        }
-                    }
-
                     const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
+                    canvas.width = img.width;
+                    canvas.height = img.height;
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-                    // Draw image on 2D canvas
-                    ctx.drawImage(img, 0, 0, width, height);
+                    ctx.drawImage(img, 0, 0);
 
-                    // Perform Chroma-Keying (Remove pitch black background if requested)
                     if (options.removeBlack) {
-                        const imgData = ctx.getImageData(0, 0, width, height);
+                        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                         const data = imgData.data;
                         const threshold = options.threshold || 28;
 
@@ -335,11 +325,11 @@
                             const g = data[i + 1];
                             const b = data[i + 2];
 
-                            // Check if pixel is dark/black
+                            // Pitch black background check
                             if (r <= threshold && g <= threshold && b <= threshold) {
-                                data[i + 3] = 0; // Make transparent
+                                data[i + 3] = 0; // Set transparent
                             } else if (r <= threshold * 1.5 && g <= threshold * 1.5 && b <= threshold * 1.5) {
-                                // Smooth alpha edge feathering
+                                // Smooth edge feathering
                                 const maxVal = Math.max(r, g, b);
                                 const factor = (maxVal - threshold) / (threshold * 0.5);
                                 data[i + 3] = Math.floor(Math.min(255, Math.max(0, factor * 255)));
@@ -348,113 +338,102 @@
                         ctx.putImageData(imgData, 0, 0);
                     }
 
-                    const texture = new THREE.CanvasTexture(canvas);
-                    texture.encoding = THREE.sRGBEncoding;
-                    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                    resolve(texture);
+                    resolve(canvas.toDataURL('image/png'));
                 };
 
                 img.onerror = () => {
-                    console.warn(`Failed to load ${imageSrc}, generating high-res procedural fallback.`);
-                    resolve(generateFallbackTexture(options.type));
+                    console.warn(`Could not load local image: ${src}. Rendering fallback graphic.`);
+                    resolve(generateProceduralFallback(options.type));
                 };
 
-                // Use encoded path to prevent URL syntax errors on iOS/Android WebGL
-                img.src = encodeURI(imageSrc);
+                img.src = encodeURI(src);
             });
         }
 
-
         /**
-         * Crisp procedural white paper sheet generator.
-         * Guarantees the document is ALWAYS bright white even if local images are missing!
+         * High quality procedural white paper fallback generator.
+         * Guarantees the document is bright and beautiful even if files are missing.
          */
-        function generateFallbackTexture(type) {
+        function generateProceduralFallback(type) {
             const canvas = document.createElement('canvas');
-            canvas.width = 1024;
-            canvas.height = 1448; // A4 aspect ratio
+            canvas.width = 800;
+            canvas.height = 1131; // A4 aspect ratio
             const ctx = canvas.getContext('2d');
 
             if (type === 'base') {
-                // Crisp White Paper Cover
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 // Tricolor Border
-                ctx.strokeStyle = '#EA580C'; // Saffron
-                ctx.lineWidth = 14;
+                ctx.strokeStyle = '#EA580C';
+                ctx.lineWidth = 12;
                 ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
 
-                ctx.strokeStyle = '#16A34A'; // Green
-                ctx.lineWidth = 14;
-                ctx.strokeRect(34, 34, canvas.width - 68, canvas.height - 68);
+                ctx.strokeStyle = '#16A34A';
+                ctx.lineWidth = 12;
+                ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
 
-                // Typography Header
                 ctx.fillStyle = '#0F172A';
-                ctx.font = 'bold 52px serif';
+                ctx.font = 'bold 42px serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('ONE INDIA, GREAT INDIA', 512, 280);
+                ctx.fillText('ONE INDIA, GREAT INDIA', 400, 220);
 
                 ctx.fillStyle = '#EA580C';
-                ctx.font = 'bold 36px sans-serif';
-                ctx.fillText('JAMMU & KASHMIR  vs  TAMIL NADU', 512, 380);
+                ctx.font = 'bold 28px sans-serif';
+                ctx.fillText('JAMMU & KASHMIR  vs  TAMIL NADU', 400, 300);
 
                 ctx.fillStyle = '#64748B';
-                ctx.font = '24px sans-serif';
-                ctx.fillText('DIFFERENT LANDS  |  SAME DREAMS  |  ONE NATION', 512, 440);
+                ctx.font = '18px sans-serif';
+                ctx.fillText('DIFFERENT LANDS  |  SAME DREAMS  |  ONE NATION', 400, 350);
 
                 ctx.strokeStyle = '#cbd5e1';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(150, 480);
-                ctx.lineTo(874, 480);
+                ctx.moveTo(100, 380);
+                ctx.lineTo(700, 380);
                 ctx.stroke();
 
             } else if (type === 'middle') {
-                // Middle Scenic Collage Fallback
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Soft Kashmir / Tamil Nadu visual card
                 ctx.fillStyle = 'rgba(234, 88, 12, 0.9)';
-                ctx.roundRect ? ctx.roundRect(80, 520, 400, 320, 20) : ctx.fillRect(80, 520, 400, 320);
+                ctx.beginPath();
+                ctx.roundRect(60, 440, 320, 240, 16);
                 ctx.fill();
 
                 ctx.fillStyle = 'rgba(22, 163, 74, 0.9)';
-                ctx.roundRect ? ctx.roundRect(544, 520, 400, 320, 20) : ctx.fillRect(544, 520, 400, 320);
+                ctx.beginPath();
+                ctx.roundRect(420, 440, 320, 240, 16);
                 ctx.fill();
 
                 ctx.fillStyle = '#FFFFFF';
-                ctx.font = 'bold 32px sans-serif';
+                ctx.font = 'bold 24px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('Jammu & Kashmir', 280, 690);
-                ctx.fillText('Tamil Nadu', 744, 690);
+                ctx.fillText('Jammu & Kashmir', 220, 570);
+                ctx.fillText('Tamil Nadu', 580, 570);
 
             } else {
-                // Top Map Layer Fallback
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 ctx.fillStyle = '#16A34A';
                 ctx.beginPath();
-                ctx.arc(512, 1050, 180, 0, Math.PI * 2);
+                ctx.arc(400, 840, 140, 0, Math.PI * 2);
                 ctx.fill();
 
                 ctx.fillStyle = '#FFFFFF';
-                ctx.font = 'bold 28px sans-serif';
+                ctx.font = 'bold 24px sans-serif';
                 ctx.textAlign = 'center';
-                ctx.fillText('INDIA MAP', 512, 1060);
+                ctx.fillText('INDIA MAP', 400, 850);
             }
 
-            const texture = new THREE.CanvasTexture(canvas);
-            texture.encoding = THREE.sRGBEncoding;
-            return texture;
+            return canvas.toDataURL('image/png');
         }
 
-
-        function updateLoadingProgress() {
+        function updateProgress() {
             loadedCount++;
             const percent = Math.round((loadedCount / TOTAL_LAYERS) * 100);
             document.getElementById('loading-bar').style.width = percent + '%';
-            document.getElementById('loading-text').innerText = `${loadedCount} / ${TOTAL_LAYERS} Textures Loaded`;
+            document.getElementById('loading-text').innerText = `${loadedCount} / ${TOTAL_LAYERS} Images Processed`;
 
             if (loadedCount >= TOTAL_LAYERS) {
                 const overlay = document.getElementById('loading-overlay');
@@ -465,95 +444,95 @@
             }
         }
 
-        async function loadAllPaperLayers() {
-            // Paper Geometry (A4 proportions)
-            const paperW = 2.7;
-            const paperH = 3.82;
-            const paperGeo = new THREE.PlaneGeometry(paperW, paperH, 32, 32);
+        async function initPaperLayers() {
+            // Load base sheet
+            const baseData = await processImageChromaKey(IMAGE_FILES.base, { type: 'base', removeBlack: false });
+            document.getElementById('img_base').src = baseData;
+            updateProgress();
 
-            // 1. Base Paper Sheet Layer (social front page 2)
-            const baseTexture = await processImageWithCanvas2D(IMAGE_FILES.base, { type: 'base', removeBlack: false });
-            const baseMat = new THREE.MeshStandardMaterial({
-                map: baseTexture,
-                roughness: 0.3,
-                metalness: 0.02,
-                color: 0xffffff,
-                side: THREE.DoubleSide
-            });
-            baseMesh = new THREE.Mesh(paperGeo, baseMat);
-            baseMesh.rotation.x = -Math.PI / 2;
-            baseMesh.castShadow = true;
-            baseMesh.receiveShadow = true;
-            scene.add(baseMesh);
-            updateLoadingProgress();
+            // Load middle scenic collage
+            const middleData = await processImageChromaKey(IMAGE_FILES.middle, { type: 'middle', removeBlack: true, threshold: 28 });
+            document.getElementById('img_middle').src = middleData;
+            updateProgress();
 
-            // 2. Middle Scenic Layer (social front page 3)
-            const middleTexture = await processImageWithCanvas2D(IMAGE_FILES.middle, { type: 'middle', removeBlack: true, threshold: 28 });
-            const middleMat = new THREE.MeshStandardMaterial({
-                map: middleTexture,
-                transparent: true,
-                depthWrite: false, // Prevents Z-fighting occlusion
-                roughness: 0.3,
-                metalness: 0.02,
-                side: THREE.DoubleSide
-            });
-            middleMesh = new THREE.Mesh(paperGeo, middleMat);
-            middleMesh.rotation.x = -Math.PI / 2;
-            middleMesh.castShadow = true;
-            middleMesh.receiveShadow = true;
-            scene.add(middleMesh);
-            updateLoadingProgress();
-
-            // 3. Top Map Layer (social front page india image)
-            const topTexture = await processImageWithCanvas2D(IMAGE_FILES.top, { type: 'top', removeBlack: true, threshold: 28 });
-            const topMat = new THREE.MeshStandardMaterial({
-                map: topTexture,
-                transparent: true,
-                depthWrite: false, // Prevents Z-fighting occlusion
-                roughness: 0.25,
-                metalness: 0.02,
-                side: THREE.DoubleSide
-            });
-            topMesh = new THREE.Mesh(paperGeo, topMat);
-            topMesh.rotation.x = -Math.PI / 2;
-            topMesh.castShadow = true;
-            topMesh.receiveShadow = true;
-            scene.add(topMesh);
-            updateLoadingProgress();
+            // Load top India map
+            const topData = await processImageChromaKey(IMAGE_FILES.top, { type: 'top', removeBlack: true, threshold: 28 });
+            document.getElementById('img_top').src = topData;
+            updateProgress();
         }
 
+        function setupInteractionHandlers() {
+            const world = document.getElementById('world_3d');
+            let isDragging = false;
+            let lastPointerX = 0;
+            let lastPointerY = 0;
 
-        /**
-         * Calculates vertical separation based on camera view pitch angle.
-         * Top View = flat document sheet
-         * Tilted View = separated 3D layers with floating drop shadows
-         */
-        function updateLayerExplosion() {
-            if (!baseMesh || !middleMesh || !topMesh) return;
+            // Touch gesture tracking
+            let initialPinchDist = 0;
+            let initialScale = 1;
 
-            const camPos = camera.position;
-            const distance = camPos.length();
+            window.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('header')) return; // Ignore clicks on top navigation
+                isDragging = true;
+                lastPointerX = e.clientX;
+                lastPointerY = e.clientY;
+            });
 
-            // cosTheta = 1.0 when directly above
-            const cosTheta = Math.min(Math.max(camPos.y / distance, 0), 1);
+            window.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
 
-            // Factor ranges from 0.0 (top down) to 1.0 (tilted sideways)
-            const tiltFactor = Math.pow(1 - cosTheta, 1.2);
+                const deltaX = e.clientX - lastPointerX;
+                const deltaY = e.clientY - lastPointerY;
 
-            const targetGap = tiltFactor * explosionState.maxGap;
+                // Orbit rotation sensitivity
+                state.targetRotY += deltaX * 0.45;
+                state.targetRotX -= deltaY * 0.45;
 
-            // Interpolate position smoothly
-            explosionState.currentGap += (targetGap - explosionState.currentGap) * 0.1;
+                // Clamp tilt rotation range (0 = flat top view, 75 = steep tilt)
+                state.targetRotX = Math.max(0, Math.min(75, state.targetRotX));
+                
+                // Wrap horizontal rotation
+                if (state.targetRotY > 180) state.targetRotY -= 360;
+                if (state.targetRotY < -180) state.targetRotY += 360;
 
-            const gap = explosionState.currentGap;
+                lastPointerX = e.clientX;
+                lastPointerY = e.clientY;
+            });
 
-            baseMesh.position.y = 0.01;
-            middleMesh.position.y = 0.01 + gap;
-            topMesh.position.y = 0.01 + gap * 2.0;
-        }
+            window.addEventListener('pointerup', () => { isDragging = false; });
+            window.addEventListener('pointercancel', () => { isDragging = false; });
 
+            // Wheel Zoom
+            window.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
+                state.targetScale = Math.max(0.5, Math.min(2.2, state.targetScale * zoomFactor));
+            }, { passive: false });
 
-        function setupControls() {
+            // Mobile Multi-Touch Pinch Zoom
+            window.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    isDragging = false;
+                    initialPinchDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    initialScale = state.targetScale;
+                }
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDist > 0) {
+                    const currentDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const scaleFactor = currentDist / initialPinchDist;
+                    state.targetScale = Math.max(0.5, Math.min(2.2, initialScale * scaleFactor));
+                }
+            }, { passive: true });
+
+            // Button UI Action Controls
             const btnTop = document.getElementById('btn-top');
             const btnIso = document.getElementById('btn-iso');
             const btnReset = document.getElementById('btn-reset');
@@ -561,73 +540,80 @@
             btnTop.addEventListener('click', () => {
                 btnTop.classList.add('active');
                 btnIso.classList.remove('active');
-                const dist = getResponsiveDistance();
-                animateCameraTo(0, dist, 0.001);
+                state.targetRotX = 0; // Flat top down
+                state.targetRotY = 0;
+                state.targetPanX = 0;
+                state.targetPanY = 0;
+                state.targetScale = 1.0;
             });
 
             btnIso.addEventListener('click', () => {
                 btnIso.classList.add('active');
                 btnTop.classList.remove('active');
-                const dist = getResponsiveDistance();
-                animateCameraTo(0, dist * 0.75, dist * 0.7);
+                state.targetRotX = 42;
+                state.targetRotY = -18;
+                state.targetScale = 0.95;
             });
 
             btnReset.addEventListener('click', () => {
                 btnIso.classList.add('active');
                 btnTop.classList.remove('active');
-                const dist = getResponsiveDistance();
-                animateCameraTo(0, dist * 0.75, dist * 0.7);
+                state.targetRotX = 42;
+                state.targetRotY = -18;
+                state.targetPanX = 0;
+                state.targetPanY = 0;
+                state.targetScale = 0.95;
             });
         }
 
-        function getResponsiveDistance() {
-            const aspect = window.innerWidth / window.innerHeight;
-            // On mobile portrait, camera moves further back to fit A4 ratio
-            if (aspect < 0.75) return 5.8;
-            if (aspect < 1.0) return 5.0;
-            return 4.2;
+        /**
+         * Ultra-smooth animation loop utilizing CSS 3D transform matrices.
+         * Runs on GPU compositor thread at full native device refresh rate (60-120 FPS).
+         */
+        function animationLoop() {
+            // Smooth lerp (linear interpolation) physics
+            const lerpSpeed = 0.12;
+            state.rotX += (state.targetRotX - state.rotX) * lerpSpeed;
+            state.rotY += (state.targetRotY - state.rotY) * lerpSpeed;
+            state.scale += (state.targetScale - state.scale) * lerpSpeed;
+            state.panX += (state.targetPanX - state.panX) * lerpSpeed;
+            state.panY += (state.targetPanY - state.panY) * lerpSpeed;
+
+            // Compute dynamic 3D explosion gap based on tilt angle (rotX)
+            // When rotX is close to 0 (top view), gap shrinks to 0 (flat page)
+            const tiltRatio = Math.min(1, Math.max(0, state.rotX / 50));
+            const targetGap = Math.pow(tiltRatio, 1.2) * state.maxZGap;
+            state.currentZGap += (targetGap - state.currentZGap) * lerpSpeed;
+
+            const gap = state.currentZGap;
+
+            // Apply 3D matrix transform to main world stage
+            const world = document.getElementById('world_3d');
+            world.style.transform = `
+                translate3d(${state.panX}px, ${state.panY}px, 0px)
+                scale(${state.scale})
+                rotateX(${state.rotX}deg)
+                rotateY(${state.rotY}deg)
+            `;
+
+            // Apply Z-axis depth separation to individual layer cards
+            const layerBase = document.getElementById('layer_base');
+            const layerMiddle = document.getElementById('layer_middle');
+            const layerTop = document.getElementById('layer_top');
+
+            layerBase.style.transform = `translateZ(0px)`;
+            layerMiddle.style.transform = `translateZ(${gap}px)`;
+            layerTop.style.transform = `translateZ(${gap * 2.0}px)`;
+
+            requestAnimationFrame(animationLoop);
         }
 
-        function updateCameraPosition() {
-            const dist = getResponsiveDistance();
-            camera.position.set(0, dist * 0.75, dist * 0.7);
-            if (controls) controls.target.set(0, 0, 0);
-        }
-
-        function animateCameraTo(targetX, targetY, targetZ) {
-            const start = camera.position.clone();
-            const target = new THREE.Vector3(targetX, targetY, targetZ);
-            let startTime = null;
-
-            function step(time) {
-                if (!startTime) startTime = time;
-                const progress = Math.min((time - startTime) / 600, 1);
-                const ease = 1 - Math.pow(1 - progress, 3); // Cubic ease out
-
-                camera.position.lerpVectors(start, target, ease);
-                controls.update();
-
-                if (progress < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-
-            const pixelRatioCap = Math.min(window.devicePixelRatio, 2);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(pixelRatioCap);
-        }
-
-
-        function renderLoop() {
-            requestAnimationFrame(renderLoop);
-            controls.update();
-            updateLayerExplosion();
-            renderer.render(scene, camera);
-        }
+        // Initialize application on DOM load
+        window.addEventListener('load', () => {
+            initPaperLayers();
+            setupInteractionHandlers();
+            animationLoop();
+        });
     </script>
 </body>
 </html>
