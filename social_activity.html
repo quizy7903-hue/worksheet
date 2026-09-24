@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>One India, Great India - 3D Paper World</title>
+    <title>One India, Great India - Ultra-Reliable 3D World</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Fonts & Font Awesome Icons -->
+    <!-- Fonts & FontAwesome -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Three.js & OrbitControls -->
@@ -28,39 +28,46 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            background-color: #080d1a;
-            color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f1f5f9; /* Bright slate background */
+            color: #0f172a;
             user-select: none;
             -webkit-user-select: none;
         }
 
         /* Glassmorphism Navigation Bar */
         .glass-panel {
-            background: rgba(13, 19, 36, 0.88);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
         }
 
         .btn-action {
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #334155;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             min-height: 38px;
         }
 
+        .btn-action:hover:not(:disabled) {
+            background: #f8fafc;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
         .btn-action:active:not(:disabled) {
             transform: scale(0.96);
-            background: rgba(255, 255, 255, 0.2);
+            background: #f1f5f9;
         }
 
         .btn-action.active {
-            background: linear-gradient(135deg, rgba(249, 115, 22, 0.4), rgba(16, 185, 129, 0.4));
-            border-color: rgba(249, 115, 22, 0.7);
-            box-shadow: 0 0 12px rgba(249, 115, 22, 0.3);
+            background: #0f172a;
+            border-color: #0f172a;
             color: #ffffff;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
         }
 
         /* WebGL Canvas */
@@ -74,14 +81,14 @@
             outline: none;
         }
 
-        /* Animated Spinner for Loading Screen */
+        /* Loading Spinner */
         .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid #f97316;
-            border-right: 3px solid #10b981;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #ea580c; /* Tiranga Orange */
+            border-right: 3px solid #16a34a; /* Tiranga Green */
             border-radius: 50%;
-            width: 44px;
-            height: 44px;
+            width: 42px;
+            height: 42px;
             animation: spin 0.8s linear infinite;
         }
 
@@ -91,24 +98,24 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 overflow-hidden select-none">
+<body class="bg-slate-100 text-slate-900 overflow-hidden select-none">
 
-    <!-- Loading Overlay (Fixes Black Screen Glitch on Mobile) -->
-    <div id="loading-overlay" class="fixed inset-0 z-50 bg-slate-950 flex flex-col items-center justify-center p-6 transition-opacity duration-700">
-        <div class="glass-panel p-8 rounded-3xl flex flex-col items-center max-w-sm w-full text-center shadow-2xl">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-50 bg-slate-100/95 backdrop-blur-md flex flex-col items-center justify-center p-6 transition-opacity duration-500">
+        <div class="glass-panel p-8 rounded-3xl flex flex-col items-center max-w-xs w-full text-center shadow-xl">
             <div class="relative mb-5 flex items-center justify-center">
                 <div class="spinner"></div>
-                <i class="fa-solid fa-layer-group text-orange-400 absolute text-sm"></i>
+                <i class="fa-solid fa-layer-group text-orange-600 absolute text-xs"></i>
             </div>
             
-            <h2 class="text-lg font-bold font-serif bg-gradient-to-r from-orange-400 via-slate-100 to-emerald-400 bg-clip-text text-transparent">
+            <h2 class="text-base font-bold font-serif text-slate-900 tracking-tight">
                 One India, Great India
             </h2>
-            <p class="text-xs text-slate-400 mt-1 mb-4 font-medium">Preparing 3D GPU Layers...</p>
+            <p class="text-xs text-slate-500 mt-1 mb-4 font-medium">Preparing Bright 3D Scene...</p>
 
             <!-- Progress Bar -->
-            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                <div id="loading-bar" class="bg-gradient-to-r from-orange-500 to-emerald-500 h-full w-0 transition-all duration-300"></div>
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden border border-slate-300">
+                <div id="loading-bar" class="bg-gradient-to-r from-orange-500 via-slate-600 to-emerald-600 h-full w-0 transition-all duration-300"></div>
             </div>
             <span id="loading-text" class="text-[11px] text-slate-500 mt-2 font-mono">0 / 3 Textures Loaded</span>
         </div>
@@ -117,371 +124,409 @@
     <!-- Top Navigation Controls -->
     <header class="fixed top-3 left-3 right-3 z-30 flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-2xl glass-panel">
         
-        <!-- Left: Project Branding -->
+        <!-- Left: Branding -->
         <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-orange-500 via-white to-emerald-500 p-[2px] shadow-sm flex-shrink-0">
-                <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-                    <i class="fa-solid fa-layer-group text-orange-400 text-xs sm:text-sm"></i>
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-orange-500 via-white to-emerald-600 p-[2px] shadow-sm flex-shrink-0">
+                <div class="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
+                    <i class="fa-solid fa-layer-group text-orange-600 text-xs sm:text-sm"></i>
                 </div>
             </div>
             <div class="hidden xs:block">
-                <h1 class="font-bold text-xs sm:text-sm font-serif tracking-wide bg-gradient-to-r from-orange-400 via-slate-100 to-emerald-400 bg-clip-text text-transparent">
+                <h1 class="font-bold text-xs sm:text-sm font-serif tracking-wide text-slate-900">
                     One India, Great India
                 </h1>
-                <p class="text-[9px] sm:text-[10px] text-slate-400 font-medium leading-none">3D GPU Layered World</p>
+                <p class="text-[9px] sm:text-[10px] text-slate-500 font-medium leading-none">3D Interactive Paper Viewer</p>
             </div>
         </div>
 
         <!-- Center: Minimal Page Switcher -->
-        <div class="flex items-center gap-1 bg-slate-950/80 p-1 rounded-xl border border-slate-800/80 shadow-inner">
-            <button id="btn-prev" class="btn-action w-8 h-8 rounded-lg flex items-center justify-center text-slate-500" disabled title="Previous Page">
+        <div class="flex items-center gap-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 shadow-inner">
+            <button id="btn-prev" class="btn-action w-8 h-8 rounded-lg flex items-center justify-center opacity-40 cursor-not-allowed text-slate-400" disabled title="Previous Page">
                 <i class="fa-solid fa-chevron-left text-xs"></i>
             </button>
-            <span class="px-2.5 sm:px-3 text-xs font-semibold text-orange-400 tracking-wider select-none whitespace-nowrap">
+            <span class="px-2.5 sm:px-3 text-xs font-semibold text-slate-800 tracking-wider select-none whitespace-nowrap">
                 Page 1 of 1
             </span>
-            <button id="btn-next" class="btn-action w-8 h-8 rounded-lg flex items-center justify-center text-slate-500" disabled title="Next Page">
+            <button id="btn-next" class="btn-action w-8 h-8 rounded-lg flex items-center justify-center opacity-40 cursor-not-allowed text-slate-400" disabled title="Next Page">
                 <i class="fa-solid fa-chevron-right text-xs"></i>
             </button>
         </div>
 
-        <!-- Right: Camera Presets -->
+        <!-- Right: View Modes -->
         <div class="flex items-center gap-1">
-            <button id="btn-top" class="btn-action px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-slate-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-arrows-to-dot text-orange-400 text-xs"></i>
+            <button id="btn-top" class="btn-action px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5">
+                <i class="fa-solid fa-arrows-to-dot text-orange-600 text-xs"></i>
                 <span class="hidden md:inline">Top View</span>
             </button>
-            <button id="btn-iso" class="btn-action px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-slate-200 flex items-center gap-1.5 active">
-                <i class="fa-solid fa-cube text-emerald-400 text-xs"></i>
+            <button id="btn-iso" class="btn-action px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 active">
+                <i class="fa-solid fa-cube text-emerald-600 text-xs"></i>
                 <span class="hidden md:inline">3D View</span>
             </button>
-            <button id="btn-reset" class="btn-action w-8 h-8 rounded-xl flex items-center justify-center text-slate-300" title="Reset View">
+            <button id="btn-reset" class="btn-action w-8 h-8 rounded-xl flex items-center justify-center" title="Reset View">
                 <i class="fa-solid fa-rotate-left text-xs"></i>
             </button>
         </div>
     </header>
 
-    <!-- Bottom Floating Interaction Hint -->
-    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2 rounded-full text-[11px] text-slate-300 flex items-center gap-2.5 shadow-xl pointer-events-none whitespace-nowrap max-w-[90vw] overflow-hidden">
-        <span class="flex items-center gap-1 text-orange-400 font-medium">
+    <!-- Bottom Interaction Hint -->
+    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2 rounded-full text-[11px] text-slate-700 flex items-center gap-2.5 shadow-lg pointer-events-none whitespace-nowrap max-w-[90vw] overflow-hidden">
+        <span class="flex items-center gap-1 text-orange-600 font-semibold">
             <i class="fa-solid fa-hand-pointer animate-pulse"></i> Drag to rotate
         </span>
-        <span class="text-slate-600">•</span>
-        <span class="text-emerald-400 flex items-center gap-1 font-medium">
-            <i class="fa-solid fa-up-down text-xs"></i> Tilt to expand 3D depth
+        <span class="text-slate-300">•</span>
+        <span class="text-emerald-700 flex items-center gap-1 font-semibold">
+            <i class="fa-solid fa-up-down text-xs"></i> Tilt for 3D depth
         </span>
     </div>
 
-    <!-- WebGL Canvas Container -->
+    <!-- WebGL Canvas -->
     <canvas id="webgl-canvas"></canvas>
 
     <script>
-        // Image filenames located in the same directory (Deployment ready for Vercel/Static hosting)
-        const LOCAL_IMAGES = {
+        
+        // Exact target filenames in current directory
+        const IMAGE_FILES = {
             base: 'social front page 2.png',
             middle: 'social front page 3.png',
             top: 'social front page india image.png'
         };
 
-        // Core Three.js Engine Variables
         let scene, camera, renderer, controls;
         let baseMesh, middleMesh, topMesh;
 
-        // Dynamic 3D Layer Separation Controls
+        // Dynamic 3D vertical separation state
         const explosionState = {
-            maxDistance: 0.9,     // Maximum gap between layers when tilted sideways
-            currentDistance: 0.45 // Smooth lerp distance
+            maxGap: 0.85,
+            currentGap: 0.4
         };
 
-        // Texture Loading Progress Tracker
-        let loadedTexturesCount = 0;
-        const TOTAL_TEXTURES = 3;
+        let loadedCount = 0;
+        const TOTAL_LAYERS = 3;
 
         window.addEventListener('load', () => {
-            initThreeJS();
-            loadTexturesWithGpuKeying();
-            setupInteractionControls();
-            animateLoop();
+            initScene();
+            loadAllPaperLayers();
+            setupControls();
+            renderLoop();
         });
 
-        function initThreeJS() {
+        function initScene() {
             const canvas = document.getElementById('webgl-canvas');
 
-            // 1. Scene Setup
+            // 1. Scene Setup - BRIGHT STUDIO ENVIRONMENT
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x080d1a);
-            scene.fog = new THREE.FogExp2(0x080d1a, 0.08);
+            scene.background = new THREE.Color(0xf8fafc); // Bright Slate-50 background
+            scene.fog = new THREE.FogExp2(0xf8fafc, 0.05);
 
             // 2. Camera Setup
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 50);
-            
-            // Adjust camera position dynamically based on mobile vs desktop screen aspect
-            updateCameraForScreenAspect();
+            updateCameraPosition();
 
-            // 3. Ultra-Optimized Mobile WebGL Renderer
-            // Mobile GPU Fix: Capping pixel ratio to 1.5 prevents 3K/4K high-DPI mobile rendering lag
-            const mobileDpiCap = Math.min(window.devicePixelRatio, 1.5);
-
-            renderer = new THREE.WebGLRenderer({ 
-                canvas: canvas, 
-                antialias: true, 
-                powerPreference: "high-performance",
-                precision: "mediump" // Optimizes GPU fragment processing on phones
+            // 3. High Performance Renderer
+            const pixelRatioCap = Math.min(window.devicePixelRatio, 2);
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: false,
+                powerPreference: 'high-performance'
             });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(mobileDpiCap);
+            renderer.setPixelRatio(pixelRatioCap);
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Smooth soft shadows
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
 
-            // 4. OrbitControls (Full Touch Support for Mobile)
+            // 4. OrbitControls with full touch & gesture support
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.dampingFactor = 0.06;
-            controls.maxPolarAngle = Math.PI / 2 - 0.03; // Prevent camera going under floor
+            controls.dampingFactor = 0.08;
+            controls.maxPolarAngle = Math.PI / 2 - 0.02; // Don't go below ground
+            controls.minDistance = 1.2;
+            controls.maxDistance = 10;
             controls.target.set(0, 0, 0);
 
-            // Set zoom limits
-            controls.minDistance = 1.5;
-            controls.maxDistance = 12;
-
-            // 5. Lighting Setup
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+            // 5. Bright Studio Lighting Environment (NO BLACK SCENES)
+            // High intensity ambient light guarantees base illumination even if shadows fail
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
             scene.add(ambientLight);
 
-            // Main Directional Light with Optimized 1024x1024 Shadow Map
-            const dirLight = new THREE.DirectionalLight(0xfffdf5, 1.2);
-            dirLight.position.set(3, 7, 3);
-            dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 1024;  // Mobile optimized shadow map size
-            dirLight.shadow.mapSize.height = 1024;
-            dirLight.shadow.camera.near = 0.5;
-            dirLight.shadow.camera.far = 14;
-            dirLight.shadow.camera.left = -2.5;
-            dirLight.shadow.camera.right = -2.5;
-            dirLight.shadow.camera.top = 2.5;
-            dirLight.shadow.camera.bottom = -2.5;
-            dirLight.shadow.bias = -0.0003;
-            scene.add(dirLight);
+            // Bright Key Directional Light for rich soft shadows
+            const keyLight = new THREE.DirectionalLight(0xfffaed, 1.2);
+            keyLight.position.set(3, 8, 4);
+            keyLight.castShadow = true;
+            keyLight.shadow.mapSize.width = 1024;
+            keyLight.shadow.mapSize.height = 1024;
+            keyLight.shadow.camera.near = 0.5;
+            keyLight.shadow.camera.far = 15;
+            keyLight.shadow.camera.left = -2.5;
+            keyLight.shadow.camera.right = 2.5;
+            keyLight.shadow.camera.top = 2.5;
+            keyLight.shadow.camera.bottom = -2.5;
+            keyLight.shadow.bias = -0.0002;
+            scene.add(keyLight);
 
-            // Subtle Fill Light for 3D Depth
-            const fillLight = new THREE.DirectionalLight(0x38bdf8, 0.4);
-            fillLight.position.set(-3, 3, -2);
+            // Soft Fill Light from opposite side
+            const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.7);
+            fillLight.position.set(-3, 5, -3);
             scene.add(fillLight);
 
-            // 6. Ground & Grid
-            const floorGeo = new THREE.PlaneGeometry(24, 24);
-            const floorMat = new THREE.MeshStandardMaterial({ 
-                color: 0x0c1324, 
-                roughness: 0.85, 
-                metalness: 0.1 
+            // Studio Floor Plane with soft grid
+            const floorGeo = new THREE.PlaneGeometry(20, 20);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0xe2e8f0,
+                roughness: 0.9,
+                metalness: 0.05
             });
             const floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
-            floor.position.y = -0.05;
+            floor.position.y = -0.01;
             floor.receiveShadow = true;
             scene.add(floor);
 
-            const grid = new THREE.GridHelper(16, 32, 0xf97316, 0x1e293b);
-            grid.position.y = -0.04;
+            const grid = new THREE.GridHelper(16, 32, 0xcbd5e1, 0xe2e8f0);
+            grid.position.y = 0;
             scene.add(grid);
 
             window.addEventListener('resize', onWindowResize);
         }
 
+
         /**
-         * GPU-BASED BLACK KEYING SHADER (Fixes Mobile Lag & Black Screen Crashes)
-         * Modifies standard MeshStandardMaterial at GPU compile time (`onBeforeCompile`).
-         * Removes CPU JavaScript canvas loops entirely!
+         * Cross-platform Image Loader & Canvas 2D Chroma-Key Processor.
+         * Runs fast on mobile without unstable custom WebGL GLSL shader compile hacks.
          */
-        function applyGpuBlackRemoval(material, threshold = 0.14) {
-            material.onBeforeCompile = (shader) => {
-                shader.fragmentShader = shader.fragmentShader.replace(
-                    '#include <map_fragment>',
-                    `
-                    #ifdef USE_MAP
-                        vec4 sampledTexel = texture2D( map, vUv );
-                        
-                        // Calculate maximum color component to isolate dark/black pixels
-                        float maxColor = max(sampledTexel.r, max(sampledTexel.g, sampledTexel.b));
-                        
-                        // GPU smoothstep keying: smoothly fades alpha around dark threshold
-                        float alphaFactor = smoothstep(0.02, ${threshold.toFixed(2)}, maxColor);
-                        
-                        // Discard pixel instantly on GPU if below threshold
-                        if (alphaFactor < 0.02) {
-                            discard;
+        function processImageWithCanvas2D(imageSrc, options = {}) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+
+                img.onload = () => {
+                    // Mobile GPU Memory Protection: Cap max texture dimension to 2048px
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 2048;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
                         }
-                        
-                        sampledTexel.a *= alphaFactor;
-                        diffuseColor *= sampledTexel;
-                    #endif
-                    `
-                );
-            };
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+                    // Draw image on 2D canvas
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Perform Chroma-Keying (Remove pitch black background if requested)
+                    if (options.removeBlack) {
+                        const imgData = ctx.getImageData(0, 0, width, height);
+                        const data = imgData.data;
+                        const threshold = options.threshold || 28;
+
+                        for (let i = 0; i < data.length; i += 4) {
+                            const r = data[i];
+                            const g = data[i + 1];
+                            const b = data[i + 2];
+
+                            // Check if pixel is dark/black
+                            if (r <= threshold && g <= threshold && b <= threshold) {
+                                data[i + 3] = 0; // Make transparent
+                            } else if (r <= threshold * 1.5 && g <= threshold * 1.5 && b <= threshold * 1.5) {
+                                // Smooth alpha edge feathering
+                                const maxVal = Math.max(r, g, b);
+                                const factor = (maxVal - threshold) / (threshold * 0.5);
+                                data[i + 3] = Math.floor(Math.min(255, Math.max(0, factor * 255)));
+                            }
+                        }
+                        ctx.putImageData(imgData, 0, 0);
+                    }
+
+                    const texture = new THREE.CanvasTexture(canvas);
+                    texture.encoding = THREE.sRGBEncoding;
+                    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                    resolve(texture);
+                };
+
+                img.onerror = () => {
+                    console.warn(`Failed to load ${imageSrc}, generating high-res procedural fallback.`);
+                    resolve(generateFallbackTexture(options.type));
+                };
+
+                // Use encoded path to prevent URL syntax errors on iOS/Android WebGL
+                img.src = encodeURI(imageSrc);
+            });
         }
 
+
         /**
-         * Asynchronously loads textures directly with THREE.TextureLoader.
-         * Includes procedural fallback graphics to prevent black screens if local images are missing.
+         * Crisp procedural white paper sheet generator.
+         * Guarantees the document is ALWAYS bright white even if local images are missing!
          */
-        function loadTexturesWithGpuKeying() {
-            const textureLoader = new THREE.TextureLoader();
+        function generateFallbackTexture(type) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1448; // A4 aspect ratio
+            const ctx = canvas.getContext('2d');
 
-            // Paper aspect ratio dimensions (standard A4 proportion)
-            const paperWidth = 2.7;
-            const paperHeight = 3.82;
-            const paperGeo = new THREE.PlaneGeometry(paperWidth, paperHeight, 16, 16);
+            if (type === 'base') {
+                // Crisp White Paper Cover
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            function updateProgress() {
-                loadedTexturesCount++;
-                const percentage = Math.round((loadedTexturesCount / TOTAL_TEXTURES) * 100);
-                
-                document.getElementById('loading-bar').style.width = percentage + '%';
-                document.getElementById('loading-text').innerText = `${loadedTexturesCount} / ${TOTAL_TEXTURES} Textures Loaded`;
+                // Tricolor Border
+                ctx.strokeStyle = '#EA580C'; // Saffron
+                ctx.lineWidth = 14;
+                ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
 
-                if (loadedTexturesCount >= TOTAL_TEXTURES) {
-                    // Hide loading overlay smoothly
-                    const overlay = document.getElementById('loading-overlay');
-                    setTimeout(() => {
-                        overlay.classList.add('opacity-0', 'pointer-events-none');
-                        setTimeout(() => overlay.remove(), 700);
-                    }, 200);
-                }
+                ctx.strokeStyle = '#16A34A'; // Green
+                ctx.lineWidth = 14;
+                ctx.strokeRect(34, 34, canvas.width - 68, canvas.height - 68);
+
+                // Typography Header
+                ctx.fillStyle = '#0F172A';
+                ctx.font = 'bold 52px serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('ONE INDIA, GREAT INDIA', 512, 280);
+
+                ctx.fillStyle = '#EA580C';
+                ctx.font = 'bold 36px sans-serif';
+                ctx.fillText('JAMMU & KASHMIR  vs  TAMIL NADU', 512, 380);
+
+                ctx.fillStyle = '#64748B';
+                ctx.font = '24px sans-serif';
+                ctx.fillText('DIFFERENT LANDS  |  SAME DREAMS  |  ONE NATION', 512, 440);
+
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(150, 480);
+                ctx.lineTo(874, 480);
+                ctx.stroke();
+
+            } else if (type === 'middle') {
+                // Middle Scenic Collage Fallback
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Soft Kashmir / Tamil Nadu visual card
+                ctx.fillStyle = 'rgba(234, 88, 12, 0.9)';
+                ctx.roundRect ? ctx.roundRect(80, 520, 400, 320, 20) : ctx.fillRect(80, 520, 400, 320);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(22, 163, 74, 0.9)';
+                ctx.roundRect ? ctx.roundRect(544, 520, 400, 320, 20) : ctx.fillRect(544, 520, 400, 320);
+                ctx.fill();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 32px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Jammu & Kashmir', 280, 690);
+                ctx.fillText('Tamil Nadu', 744, 690);
+
+            } else {
+                // Top Map Layer Fallback
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#16A34A';
+                ctx.beginPath();
+                ctx.arc(512, 1050, 180, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 28px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('INDIA MAP', 512, 1060);
             }
 
-            // Fallback Texture Canvas Generator (Guarantees no black screen under any condition)
-            function createFallbackTexture(type) {
-                const canvas = document.createElement('canvas');
-                canvas.width = 1024;
-                canvas.height = 1448;
-                const ctx = canvas.getContext('2d');
-
-                if (type === 'base') {
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.strokeStyle = '#F97316';
-                    ctx.lineWidth = 18;
-                    ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
-                    ctx.fillStyle = '#1E293B';
-                    ctx.font = 'bold 44px sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('ONE INDIA, GREAT INDIA', 512, 280);
-                    ctx.font = '28px sans-serif';
-                    ctx.fillStyle = '#64748B';
-                    ctx.fillText('Social Science Project', 512, 360);
-                } else if (type === 'middle') {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = 'rgba(249, 115, 22, 0.85)';
-                    ctx.fillRect(100, 400, 824, 400);
-                } else {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = 'rgba(16, 185, 129, 0.9)';
-                    ctx.beginPath();
-                    ctx.arc(512, 724, 220, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                const tex = new THREE.CanvasTexture(canvas);
-                tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                return tex;
-            }
-
-            // 1. Load Base Sheet Texture
-            textureLoader.load(
-                LOCAL_IMAGES.base,
-                (texture) => {
-                    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                    const mat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.4, side: THREE.DoubleSide });
-                    baseMesh = new THREE.Mesh(paperGeo, mat);
-                    baseMesh.rotation.x = -Math.PI / 2;
-                    baseMesh.castShadow = true;
-                    baseMesh.receiveShadow = true;
-                    scene.add(baseMesh);
-                    updateProgress();
-                },
-                undefined,
-                () => {
-                    const texture = createFallbackTexture('base');
-                    const mat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.4, side: THREE.DoubleSide });
-                    baseMesh = new THREE.Mesh(paperGeo, mat);
-                    baseMesh.rotation.x = -Math.PI / 2;
-                    baseMesh.castShadow = true;
-                    baseMesh.receiveShadow = true;
-                    scene.add(baseMesh);
-                    updateProgress();
-                }
-            );
-
-            // 2. Load Middle Scenic Collage Texture with GPU Black Keying
-            textureLoader.load(
-                LOCAL_IMAGES.middle,
-                (texture) => {
-                    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                    const mat = new THREE.MeshStandardMaterial({ 
-                        map: texture, 
-                        transparent: true, 
-                        roughness: 0.35, 
-                        side: THREE.DoubleSide 
-                    });
-                    applyGpuBlackRemoval(mat, 0.15); // Apply GPU Shader
-                    middleMesh = new THREE.Mesh(paperGeo, mat);
-                    middleMesh.rotation.x = -Math.PI / 2;
-                    middleMesh.castShadow = true;
-                    middleMesh.receiveShadow = true;
-                    scene.add(middleMesh);
-                    updateProgress();
-                },
-                undefined,
-                () => {
-                    const texture = createFallbackTexture('middle');
-                    const mat = new THREE.MeshStandardMaterial({ map: texture, transparent: true, roughness: 0.35, side: THREE.DoubleSide });
-                    middleMesh = new THREE.Mesh(paperGeo, mat);
-                    middleMesh.rotation.x = -Math.PI / 2;
-                    middleMesh.castShadow = true;
-                    middleMesh.receiveShadow = true;
-                    scene.add(middleMesh);
-                    updateProgress();
-                }
-            );
-
-            // 3. Load Top Map Image Texture with GPU Black Keying
-            textureLoader.load(
-                LOCAL_IMAGES.top,
-                (texture) => {
-                    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                    const mat = new THREE.MeshStandardMaterial({ 
-                        map: texture, 
-                        transparent: true, 
-                        roughness: 0.3, 
-                        side: THREE.DoubleSide 
-                    });
-                    applyGpuBlackRemoval(mat, 0.15); // Apply GPU Shader
-                    topMesh = new THREE.Mesh(paperGeo, mat);
-                    topMesh.rotation.x = -Math.PI / 2;
-                    topMesh.castShadow = true;
-                    topMesh.receiveShadow = true;
-                    scene.add(topMesh);
-                    updateProgress();
-                },
-                undefined,
-                () => {
-                    const texture = createFallbackTexture('top');
-                    const mat = new THREE.MeshStandardMaterial({ map: texture, transparent: true, roughness: 0.3, side: THREE.DoubleSide });
-                    topMesh = new THREE.Mesh(paperGeo, mat);
-                    topMesh.rotation.x = -Math.PI / 2;
-                    topMesh.castShadow = true;
-                    topMesh.receiveShadow = true;
-                    scene.add(topMesh);
-                    updateProgress();
-                }
-            );
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.encoding = THREE.sRGBEncoding;
+            return texture;
         }
 
+
+        function updateLoadingProgress() {
+            loadedCount++;
+            const percent = Math.round((loadedCount / TOTAL_LAYERS) * 100);
+            document.getElementById('loading-bar').style.width = percent + '%';
+            document.getElementById('loading-text').innerText = `${loadedCount} / ${TOTAL_LAYERS} Textures Loaded`;
+
+            if (loadedCount >= TOTAL_LAYERS) {
+                const overlay = document.getElementById('loading-overlay');
+                setTimeout(() => {
+                    overlay.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => overlay.remove(), 500);
+                }, 150);
+            }
+        }
+
+        async function loadAllPaperLayers() {
+            // Paper Geometry (A4 proportions)
+            const paperW = 2.7;
+            const paperH = 3.82;
+            const paperGeo = new THREE.PlaneGeometry(paperW, paperH, 32, 32);
+
+            // 1. Base Paper Sheet Layer (social front page 2)
+            const baseTexture = await processImageWithCanvas2D(IMAGE_FILES.base, { type: 'base', removeBlack: false });
+            const baseMat = new THREE.MeshStandardMaterial({
+                map: baseTexture,
+                roughness: 0.3,
+                metalness: 0.02,
+                color: 0xffffff,
+                side: THREE.DoubleSide
+            });
+            baseMesh = new THREE.Mesh(paperGeo, baseMat);
+            baseMesh.rotation.x = -Math.PI / 2;
+            baseMesh.castShadow = true;
+            baseMesh.receiveShadow = true;
+            scene.add(baseMesh);
+            updateLoadingProgress();
+
+            // 2. Middle Scenic Layer (social front page 3)
+            const middleTexture = await processImageWithCanvas2D(IMAGE_FILES.middle, { type: 'middle', removeBlack: true, threshold: 28 });
+            const middleMat = new THREE.MeshStandardMaterial({
+                map: middleTexture,
+                transparent: true,
+                depthWrite: false, // Prevents Z-fighting occlusion
+                roughness: 0.3,
+                metalness: 0.02,
+                side: THREE.DoubleSide
+            });
+            middleMesh = new THREE.Mesh(paperGeo, middleMat);
+            middleMesh.rotation.x = -Math.PI / 2;
+            middleMesh.castShadow = true;
+            middleMesh.receiveShadow = true;
+            scene.add(middleMesh);
+            updateLoadingProgress();
+
+            // 3. Top Map Layer (social front page india image)
+            const topTexture = await processImageWithCanvas2D(IMAGE_FILES.top, { type: 'top', removeBlack: true, threshold: 28 });
+            const topMat = new THREE.MeshStandardMaterial({
+                map: topTexture,
+                transparent: true,
+                depthWrite: false, // Prevents Z-fighting occlusion
+                roughness: 0.25,
+                metalness: 0.02,
+                side: THREE.DoubleSide
+            });
+            topMesh = new THREE.Mesh(paperGeo, topMat);
+            topMesh.rotation.x = -Math.PI / 2;
+            topMesh.castShadow = true;
+            topMesh.receiveShadow = true;
+            scene.add(topMesh);
+            updateLoadingProgress();
+        }
+
+
         /**
-         * DYNAMIC 3D EXPLOSION EFFECT:
-         * Calculates vertical separation (Y-offset) based on camera pitch angle.
-         * Top-down perpendicular view = layers collapse into 1 flat cover.
-         * Tilted perspective view = layers float apart dynamically.
+         * Calculates vertical separation based on camera view pitch angle.
+         * Top View = flat document sheet
+         * Tilted View = separated 3D layers with floating drop shadows
          */
         function updateLayerExplosion() {
             if (!baseMesh || !middleMesh || !topMesh) return;
@@ -489,25 +534,26 @@
             const camPos = camera.position;
             const distance = camPos.length();
 
-            // cosTheta = 1.0 when camera is looking straight down from top
+            // cosTheta = 1.0 when directly above
             const cosTheta = Math.min(Math.max(camPos.y / distance, 0), 1);
 
-            // Tilt factor increases smoothly from 0.0 to 1.0 as camera tilts sideways
-            const tiltFactor = Math.pow(1 - cosTheta, 1.3);
+            // Factor ranges from 0.0 (top down) to 1.0 (tilted sideways)
+            const tiltFactor = Math.pow(1 - cosTheta, 1.2);
 
-            // Calculate target vertical gap
-            const targetGap = tiltFactor * explosionState.maxDistance;
+            const targetGap = tiltFactor * explosionState.maxGap;
 
-            // Interpolate distance smoothly (lerp)
-            explosionState.currentDistance += (targetGap - explosionState.currentDistance) * 0.08;
+            // Interpolate position smoothly
+            explosionState.currentGap += (targetGap - explosionState.currentGap) * 0.1;
 
-            const d = explosionState.currentDistance;
-            baseMesh.position.y = 0;
-            middleMesh.position.y = d;
-            topMesh.position.y = d * 2.0;
+            const gap = explosionState.currentGap;
+
+            baseMesh.position.y = 0.01;
+            middleMesh.position.y = 0.01 + gap;
+            topMesh.position.y = 0.01 + gap * 2.0;
         }
 
-        function setupInteractionControls() {
+
+        function setupControls() {
             const btnTop = document.getElementById('btn-top');
             const btnIso = document.getElementById('btn-iso');
             const btnReset = document.getElementById('btn-reset');
@@ -515,48 +561,48 @@
             btnTop.addEventListener('click', () => {
                 btnTop.classList.add('active');
                 btnIso.classList.remove('active');
-                const camDist = getResponsiveCameraDistance();
-                animateCameraTo(0, camDist, 0.01);
+                const dist = getResponsiveDistance();
+                animateCameraTo(0, dist, 0.001);
             });
 
             btnIso.addEventListener('click', () => {
                 btnIso.classList.add('active');
                 btnTop.classList.remove('active');
-                const camDist = getResponsiveCameraDistance();
-                animateCameraTo(0, camDist * 0.75, camDist * 0.7);
+                const dist = getResponsiveDistance();
+                animateCameraTo(0, dist * 0.75, dist * 0.7);
             });
 
             btnReset.addEventListener('click', () => {
                 btnIso.classList.add('active');
                 btnTop.classList.remove('active');
-                const camDist = getResponsiveCameraDistance();
-                animateCameraTo(0, camDist * 0.75, camDist * 0.7);
+                const dist = getResponsiveDistance();
+                animateCameraTo(0, dist * 0.75, dist * 0.7);
             });
         }
 
-        function getResponsiveCameraDistance() {
+        function getResponsiveDistance() {
             const aspect = window.innerWidth / window.innerHeight;
-            // Mobile portrait screens require the camera to be positioned further back
-            if (aspect < 0.8) return 5.8;
+            // On mobile portrait, camera moves further back to fit A4 ratio
+            if (aspect < 0.75) return 5.8;
             if (aspect < 1.0) return 5.0;
             return 4.2;
         }
 
-        function updateCameraForScreenAspect() {
-            const camDist = getResponsiveCameraDistance();
-            camera.position.set(0, camDist * 0.75, camDist * 0.7);
+        function updateCameraPosition() {
+            const dist = getResponsiveDistance();
+            camera.position.set(0, dist * 0.75, dist * 0.7);
             if (controls) controls.target.set(0, 0, 0);
         }
 
-        function animateCameraTo(x, y, z) {
+        function animateCameraTo(targetX, targetY, targetZ) {
             const start = camera.position.clone();
-            const target = new THREE.Vector3(x, y, z);
+            const target = new THREE.Vector3(targetX, targetY, targetZ);
             let startTime = null;
 
             function step(time) {
                 if (!startTime) startTime = time;
-                const progress = Math.min((time - startTime) / 750, 1);
-                const ease = 1 - Math.pow(1 - progress, 3); // Smooth cubic ease-out
+                const progress = Math.min((time - startTime) / 600, 1);
+                const ease = 1 - Math.pow(1 - progress, 3); // Cubic ease out
 
                 camera.position.lerpVectors(start, target, ease);
                 controls.update();
@@ -567,17 +613,17 @@
         }
 
         function onWindowResize() {
-            const aspect = window.innerWidth / window.innerHeight;
-            camera.aspect = aspect;
+            camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
 
-            const mobileDpiCap = Math.min(window.devicePixelRatio, 1.5);
+            const pixelRatioCap = Math.min(window.devicePixelRatio, 2);
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(mobileDpiCap);
+            renderer.setPixelRatio(pixelRatioCap);
         }
 
-        function animateLoop() {
-            requestAnimationFrame(animateLoop);
+
+        function renderLoop() {
+            requestAnimationFrame(renderLoop);
             controls.update();
             updateLayerExplosion();
             renderer.render(scene, camera);
