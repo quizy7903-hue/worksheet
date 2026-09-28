@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>3D Digital Book Viewer - One India, Great India</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b1120;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #f8fafc;
+    }
+
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .top-bar-title {
+      font-weight: 600;
+      font-size: 15px;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .top-bar-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
+
+    .page-indicator {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 600;
+      min-width: 150px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .viewport {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1800px;
+      -webkit-perspective: 1800px;
+      cursor: grab;
+      touch-action: none;
+    }
+    .viewport:active {
+      cursor: grabbing;
+    }
+
+    .world {
+      position: relative;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
+
+    .book {
+      position: absolute;
+      width: 800px;
+      height: 560px;
+      left: -400px;
+      top: -280px;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+    }
+
+    /* Each Leaf rotates around its left edge */
+    .leaf {
+      position: absolute;
+      left: 400px;
+      top: 0;
+      width: 400px;
+      height: 560px;
+      transform-origin: left center;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    }
+
+    /* 
+      FIX FOR MIRRORED IMAGE BUG:
+      1. Both faces use backface-visibility: hidden.
+      2. .page-front is at rotateY(0deg).
+      3. .page-back is at rotateY(180deg).
+      When the leaf flips -180deg:
+      - .page-front becomes -180deg -> Hidden!
+      - .page-back becomes (180deg - 180deg) = 0deg -> Upright and NON-MIRRORED!
+    */
+    .page-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
+
+    .page-front {
+      z-index: 2;
+      transform: rotateY(0deg);
+      border-radius: 2px 8px 8px 2px;
+    }
+
+    .page-back {
+      z-index: 1;
+      transform: rotateY(180deg);
+      border-radius: 8px 2px 2px 8px;
+    }
+
+    .page-img {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      display: block;
+      background: #ffffff;
+    }
+
+    .cover-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      background: #ffffff;
+    }
+
+    .cover-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      transition: transform 0.3s ease-out;
+      pointer-events: none;
+    }
+
+    .cover-layer-screen {
+      mix-blend-mode: screen;
+      background-color: transparent;
+    }
+
+    .help-tip {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(15, 23, 42, 0.85);
+      padding: 8px 18px;
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 1000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .separation-tag {
+      font-size: 11px;
+      color: #60a5fa;
+      background: rgba(37, 99, 235, 0.25);
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    /* Fallback Page Placeholder */
+    .placeholder-page {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+      color: #334155;
+    }
+    .placeholder-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+    .placeholder-sub {
+      font-size: 14px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="top-bar-title">
+      <span>📚 Social Science Project</span>
+      <span id="sepTag" class="separation-tag" style="display:none;">3D Exploded View</span>
+    </div>
+
+    <div class="top-bar-controls">
+      <button class="btn" id="btnTopView">📐 Top View</button>
+      <button class="btn" id="btn3DView">🎲 3D View</button>
+      <div class="page-indicator" id="pageIndicator">Loading...</div>
+      <button class="btn" id="btnPrev" disabled>◀ Prev</button>
+      <button class="btn btn-primary" id="btnNext">Next ▶</button>
+    </div>
+  </div>
+
+  <div class="help-tip">Drag to rotate 3D view • Scroll to zoom • Arrow keys / Swipe to flip pages</div>
+
+  <div class="viewport" id="viewport">
+    <div class="world" id="world">
+      <div class="book" id="book">
+        <!-- Leaves dynamically injected here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const COVER_BASE_NAMES = ['social front page 2.png', 'social front page 2.jpg', 'social front page 2.webp'];
+    const COVER_MID_NAMES = ['social front page 3.png', 'social front page 3.jpg', 'social front page 3.webp'];
+    const COVER_TOP_NAMES = ['social front page india image.png', 'social front page india image.jpg', 'social front page india image.webp', 'social front page map image.png', 'social front page map image.jpg'];
+
+    let currentSpread = 0;
+    let totalSpreads = 1;
+    let leafElements = [];
+
+    // Camera rotation & scale state
+    let rotX = 0;
+    let rotY = 0;
+    let scale = 1;
+    let isDragging = false;
+    let startMouseX = 0;
+    let startMouseY = 0;
+    let startRotX = 0;
+    let startRotY = 0;
+
+    // Swipe gesture tracking
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    const world = document.getElementById('world');
+    const viewport = document.getElementById('viewport');
+    const book = document.getElementById('book');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnTopView = document.getElementById('btnTopView');
+    const btn3DView = document.getElementById('btn3DView');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const sepTag = document.getElementById('sepTag');
+
+    function padNum(n) {
+      return n < 10 ? '0' + n : '' + n;
+    }
+
+    // Zero-CORS Image Prober
+    function probeImage(candidates) {
+      return new Promise((resolve) => {
+        let index = 0;
+        function tryNext() {
+          if (index >= candidates.length) {
+            resolve(null);
+            return;
+          }
+          const src = candidates[index++];
+          const img = new Image();
+          img.onload = () => resolve(src);
+          img.onerror = () => tryNext();
+          img.src = encodeURI(src);
+        }
+        tryNext();
+      });
+    }
+
+    async function probePageNumber(num) {
+      const p = padNum(num);
+      const strNum = '' + num;
+      const candidates = [
+        `${p}.png`, `${p}.jpg`, `${p}.webp`,
+        `${strNum}.png`, `${strNum}.jpg`, `${strNum}.webp`
+      ];
+      return await probeImage(candidates);
+    }
+
+    async function initBook() {
+      const coverBase = await probeImage(COVER_BASE_NAMES) || 'social front page 2.png';
+      const coverMid = await probeImage(COVER_MID_NAMES) || 'social front page 3.png';
+      const coverTop = await probeImage(COVER_TOP_NAMES) || 'social front page india image.png';
+
+      // Detect inner pages starting from page 2
+      const innerPages = [];
+      for (let i = 2; i <= 30; i++) {
+        const found = await probePageNumber(i);
+        if (found) {
+          innerPages.push({ pageNum: i, src: found });
+        } else {
+          if (i > 18) break; // Stop after 18 if no higher pages exist
+        }
+      }
+
+      const leavesData = [];
+
+      // Leaf 0 (Front Cover Leaf)
+      // Front face = 3D Layered Cover
+      // Back face = Page 02 (Left side of Spread 1)
+      const page2Obj = innerPages.find(p => p.pageNum === 2);
+      leavesData.push({
+        isCover: true,
+        coverBase: coverBase,
+        coverMid: coverMid,
+        coverTop: coverTop,
+        backSrc: page2Obj ? page2Obj.src : null,
+        backNum: 2
+      });
+
+      // Subsequent Leaves (Leaf 1, 2, 3...)
+      // Leaf 1: Front = Page 03, Back = Page 04
+      // Leaf 2: Front = Page 05, Back = Page 06
+      let pageIdx = 3;
+      while (true) {
+        const frontObj = innerPages.find(p => p.pageNum === pageIdx);
+        const backObj = innerPages.find(p => p.pageNum === pageIdx + 1);
+
+        if (!frontObj && !backObj && pageIdx > 18) break;
+
+        leavesData.push({
+          isCover: false,
+          frontSrc: frontObj ? frontObj.src : null,
+          frontNum: pageIdx,
+          backSrc: backObj ? backObj.src : null,
+          backNum: pageIdx + 1
+        });
+
+        pageIdx += 2;
+      }
+
+      totalSpreads = leavesData.length;
+
+      book.innerHTML = '';
+      leafElements = [];
+
+      leavesData.forEach((data, index) => {
+        const leaf = document.createElement('div');
+        leaf.className = 'leaf';
+        leaf.dataset.index = index;
+
+        // Front Face (rotateY 0deg)
+        const frontFace = document.createElement('div');
+        frontFace.className = 'page-face page-front';
+
+        if (data.isCover) {
+          frontFace.innerHTML = `
+            <div class="cover-container">
+              <img class="cover-layer" id="coverBaseImg" src="${encodeURI(data.coverBase)}" alt="Base Cover Sheet" />
+              <img class="cover-layer cover-layer-screen" id="coverMidImg" src="${encodeURI(data.coverMid)}" alt="Scenic Layer" />
+              <img class="cover-layer cover-layer-screen" id="coverTopImg" src="${encodeURI(data.coverTop)}" alt="Map Layer" />
+            </div>
+          `;
+        } else if (data.frontSrc) {
+          frontFace.innerHTML = `<img class="page-img" src="${encodeURI(data.frontSrc)}" alt="Page ${data.frontNum}" />`;
+        } else {
+          frontFace.innerHTML = `
+            <div class="placeholder-page">
+              <div class="placeholder-title">Page ${padNum(data.frontNum)}</div>
+              <div class="placeholder-sub">One India, Great India</div>
+            </div>
+          `;
+        }
+
+        // Back Face (rotateY 180deg - Unmirrored when flipped -180deg)
+        const backFace = document.createElement('div');
+        backFace.className = 'page-face page-back';
+
+        if (data.backSrc) {
+          backFace.innerHTML = `<img class="page-img" src="${encodeURI(data.backSrc)}" alt="Page ${data.backNum}" />`;
+        } else {
+          backFace.innerHTML = `
+            <div class="placeholder-page">
+              <div class="placeholder-title">Page ${padNum(data.backNum)}</div>
+              <div class="placeholder-sub">One India, Great India</div>
+            </div>
+          `;
+        }
+
+        leaf.appendChild(frontFace);
+        leaf.appendChild(backFace);
+        book.appendChild(leaf);
+        leafElements.push(leaf);
+      });
+
+      updateSpreadView();
+      update3DTransform();
+    }
+
+    function updateSpreadView() {
+      const total = leafElements.length;
+
+      leafElements.forEach((leaf, idx) => {
+        if (idx < currentSpread) {
+          // Leaf flipped to LEFT side (-180deg)
+          leaf.style.transform = 'rotateY(-180deg)';
+          // Newer flipped leaves sit ON TOP on the left stack
+          leaf.style.zIndex = idx + 1;
+        } else {
+          // Leaf unflipped on RIGHT side (0deg)
+          leaf.style.transform = 'rotateY(0deg)';
+          // Newer unflipped leaves sit UNDER older unflipped leaves on the right stack
+          leaf.style.zIndex = total - idx;
+        }
+      });
+
+      btnPrev.disabled = currentSpread === 0;
+      btnNext.disabled = currentSpread >= totalSpreads;
+
+      if (currentSpread === 0) {
+        pageIndicator.textContent = 'Front Cover';
+      } else {
+        const leftPageNum = padNum(currentSpread * 2);
+        const rightPageNum = padNum(currentSpread * 2 + 1);
+        const maxPage = padNum(totalSpreads * 2);
+        pageIndicator.textContent = `Pages ${leftPageNum} - ${rightPageNum} of ${maxPage}`;
+      }
+    }
+
+    function update3DTransform() {
+      rotX = Math.max(-60, Math.min(60, rotX));
+      rotY = Math.max(-180, Math.min(180, rotY));
+
+      world.style.transform = `scale(${scale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+
+      // Calculate separation distance based on 3D perspective tilt angle
+      const distFromTop = Math.sqrt(rotX * rotX + rotY * rotY);
+      const zGap = Math.min(70, distFromTop * 1.3);
+
+      const midImg = document.getElementById('coverMidImg');
+      const topImg = document.getElementById('coverTopImg');
+
+      if (midImg && topImg) {
+        if (zGap > 5) {
+          midImg.style.transform = `translateZ(${zGap * 0.5}px)`;
+          topImg.style.transform = `translateZ(${zGap}px)`;
+          sepTag.style.display = 'inline-block';
+        } else {
+          midImg.style.transform = 'translateZ(0px)';
+          topImg.style.transform = 'translateZ(0px)';
+          sepTag.style.display = 'none';
+        }
+      }
+    }
+
+    btnPrev.addEventListener('click', () => {
+      if (currentSpread > 0) {
+        currentSpread--;
+        updateSpreadView();
+      }
+    });
+
+    btnNext.addEventListener('click', () => {
+      if (currentSpread < totalSpreads) {
+        currentSpread++;
+        updateSpreadView();
+      }
+    });
+
+    btnTopView.addEventListener('click', () => {
+      rotX = 0;
+      rotY = 0;
+      scale = 1;
+      update3DTransform();
+    });
+
+    btn3DView.addEventListener('click', () => {
+      rotX = 35;
+      rotY = -25;
+      scale = 0.95;
+      update3DTransform();
+    });
+
+    // Orbit drag controls
+    viewport.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      startMouseX = e.clientX;
+      startMouseY = e.clientY;
+      startRotX = rotX;
+      startRotY = rotY;
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startMouseX;
+      const deltaY = e.clientY - startMouseY;
+
+      rotY = startRotY + deltaX * 0.4;
+      rotX = startRotX - deltaY * 0.4;
+      update3DTransform();
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - touchStartX;
+        const deltaY = Math.abs(e.clientY - touchStartY);
+
+        // Detect horizontal swipe gesture
+        if (Math.abs(deltaX) > 60 && deltaY < 80) {
+          if (deltaX < 0 && currentSpread < totalSpreads) {
+            currentSpread++;
+            updateSpreadView();
+          } else if (deltaX > 0 && currentSpread > 0) {
+            currentSpread--;
+            updateSpreadView();
+          }
+        }
+      }
+      isDragging = false;
+    });
+
+    // Zoom via mouse wheel
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      scale += e.deltaY * -0.001;
+      scale = Math.max(0.5, Math.min(2.2, scale));
+      update3DTransform();
+    }, { passive: false });
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        if (currentSpread < totalSpreads) {
+          currentSpread++;
+          updateSpreadView();
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (currentSpread > 0) {
+          currentSpread--;
+          updateSpreadView();
+        }
+      }
+    });
+
+    // Start initialization on window load
+    window.onload = () => {
+      initBook();
+    };
+  </script>
+</body>
+</html>
