@@ -1,619 +1,626 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>One India, Great India - Ultra-Fast CSS 3D World</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>3D Digital Book Viewer - One India, Great India</title>
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b1120;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #f8fafc;
+    }
 
-    <!-- Google Fonts & FontAwesome Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+    .top-bar-title {
+      font-weight: 600;
+      font-size: 15px;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .top-bar-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+    .btn-primary {
+      background: #2563eb;
+      border-color: #3b82f6;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
 
-    <style>
-        * {
-            touch-action: none; /* Custom touch inertia handler */
-            -webkit-tap-highlight-color: transparent;
-        }
+    .page-indicator {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 600;
+      min-width: 150px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background: radial-gradient(circle at center, #f8fafc 0%, #e2e8f0 100%);
-            color: #0f172a;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+    .viewport {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1800px;
+      -webkit-perspective: 1800px;
+      cursor: grab;
+      touch-action: none;
+    }
+    .viewport:active {
+      cursor: grabbing;
+    }
 
-        /* Glassmorphism Header Bar */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.88);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-        }
+    .world {
+      position: relative;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.1s ease-out;
+    }
 
-        .btn-action {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            color: #334155;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 38px;
-        }
+    .book {
+      position: absolute;
+      width: 800px;
+      height: 560px;
+      left: -400px;
+      top: -280px;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+    }
 
-        .btn-action:hover:not(:disabled) {
-            background: #f8fafc;
-            border-color: #94a3b8;
-            color: #0f172a;
-        }
+    /* Each Leaf rotates around its left edge */
+    .leaf {
+      position: absolute;
+      left: 400px;
+      top: 0;
+      width: 400px;
+      height: 560px;
+      transform-origin: left center;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+    }
 
-        .btn-action:active:not(:disabled) {
-            transform: scale(0.95);
-            background: #f1f5f9;
-        }
+    /* 
+      FIX FOR MIRRORED IMAGE BUG:
+      1. Both faces use backface-visibility: hidden.
+      2. .page-front is at rotateY(0deg).
+      3. .page-back is at rotateY(180deg).
+      When the leaf flips -180deg:
+      - .page-front becomes -180deg -> Hidden!
+      - .page-back becomes (180deg - 180deg) = 0deg -> Upright and NON-MIRRORED!
+    */
+    .page-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: #ffffff;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    }
 
-        .btn-action.active {
-            background: #0f172a;
-            border-color: #0f172a;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
-        }
+    .page-front {
+      z-index: 2;
+      transform: rotateY(0deg);
+      border-radius: 2px 8px 8px 2px;
+    }
 
-        /* CSS 3D Hardware Accelerated Viewport */
-        #viewport {
-            position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
-            perspective: 1200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            z-index: 1;
-        }
+    .page-back {
+      z-index: 1;
+      transform: rotateY(180deg);
+      border-radius: 8px 2px 2px 8px;
+    }
 
-        #world_3d {
-            position: relative;
-            width: 320px;
-            height: 452px; /* Standard A4 proportions */
-            transform-style: preserve-3d;
-            will-change: transform;
-            cursor: grab;
-        }
+    .page-img {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      display: block;
+      background: #ffffff;
+    }
 
-        #world_3d:active {
-            cursor: grabbing;
-        }
+    .cover-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      -webkit-transform-style: preserve-3d;
+      background: #ffffff;
+    }
 
-        @media (min-width: 640px) {
-            #world_3d {
-                width: 400px;
-                height: 565px;
-            }
-        }
+    .cover-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      transition: transform 0.3s ease-out;
+      pointer-events: none;
+    }
 
-        @media (min-width: 1024px) {
-            #world_3d {
-                width: 460px;
-                height: 650px;
-            }
-        }
+    .cover-layer-screen {
+      mix-blend-mode: screen;
+      background-color: transparent;
+    }
 
-        /* 3D Paper Layer Styling */
-        .paper-layer {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            backface-visibility: hidden;
-            will-change: transform;
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+    .help-tip {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(15, 23, 42, 0.85);
+      padding: 8px 18px;
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 1000;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
 
-        .paper-layer img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-            pointer-events: none;
-        }
+    .separation-tag {
+      font-size: 11px;
+      color: #60a5fa;
+      background: rgba(37, 99, 235, 0.25);
+      padding: 3px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      animation: pulse 2s infinite;
+    }
 
-        /* Base Page Realistic Shadow and Background */
-        #layer_base {
-            background: #ffffff;
-            border-radius: 6px;
-            box-shadow: 
-                0 20px 40px -10px rgba(15, 23, 42, 0.18),
-                0 10px 15px -5px rgba(15, 23, 42, 0.08),
-                0 0 0 1px rgba(0, 0, 0, 0.05);
-        }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
 
-        /* Floating Layer Shadows */
-        #layer_middle {
-            filter: drop-shadow(0 16px 16px rgba(15, 23, 42, 0.18));
-        }
-
-        #layer_top {
-            filter: drop-shadow(0 24px 22px rgba(15, 23, 42, 0.22));
-        }
-
-        /* Loading Spinner */
-        .spinner {
-            border: 3px solid #e2e8f0;
-            border-top: 3px solid #ea580c;
-            border-right: 3px solid #16a34a;
-            border-radius: 50%;
-            width: 42px;
-            height: 42px;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    /* Fallback Page Placeholder */
+    .placeholder-page {
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+      color: #334155;
+    }
+    .placeholder-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #1e293b;
+    }
+    .placeholder-sub {
+      font-size: 14px;
+      color: #64748b;
+    }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-900 overflow-hidden select-none">
+<body>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 z-50 bg-slate-100/95 backdrop-blur-md flex flex-col items-center justify-center p-6 transition-opacity duration-500">
-        <div class="glass-panel p-8 rounded-3xl flex flex-col items-center max-w-xs w-full text-center shadow-xl">
-            <div class="relative mb-5 flex items-center justify-center">
-                <div class="spinner"></div>
-                <i class="fa-solid fa-layer-group text-orange-600 absolute text-xs"></i>
-            </div>
-            
-            <h2 class="text-base font-bold font-serif text-slate-900 tracking-tight">
-                One India, Great India
-            </h2>
-            <p class="text-xs text-slate-500 mt-1 mb-4 font-medium">Optimizing CSS 3D Layers...</p>
-
-            <!-- Progress Bar -->
-            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden border border-slate-300">
-                <div id="loading-bar" class="bg-gradient-to-r from-orange-500 via-slate-600 to-emerald-600 h-full w-0 transition-all duration-300"></div>
-            </div>
-            <span id="loading-text" class="text-[11px] text-slate-500 mt-2 font-mono">0 / 3 Images Processed</span>
-        </div>
+  <div class="top-bar">
+    <div class="top-bar-title">
+      <span>📚 Social Science Project</span>
+      <span id="sepTag" class="separation-tag" style="display:none;">3D Exploded View</span>
     </div>
 
-    <!-- Top Navigation Controls Bar -->
-    <header class="fixed top-3 left-3 right-3 z-30 flex items-center justify-between gap-2 p-2 sm:p-2.5 rounded-2xl glass-panel">
-        
-        <!-- Left: Project Title -->
-        <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-orange-500 via-white to-emerald-600 p-[2px] shadow-sm flex-shrink-0">
-                <div class="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                    <i class="fa-solid fa-layer-group text-orange-600 text-xs sm:text-sm"></i>
-                </div>
-            </div>
-            <div class="hidden xs:block">
-                <h1 class="font-bold text-xs sm:text-sm font-serif tracking-wide text-slate-900">
-                    One India, Great India
-                </h1>
-                <p class="text-[9px] sm:text-[10px] text-slate-500 font-medium leading-none">Ultra-Fast 3D Document</p>
-            </div>
-        </div>
-
-        <!-- Center: Minimal Page Control -->
-        <div class="flex items-center gap-1 bg-slate-200/80 p-1 rounded-xl border border-slate-300 shadow-inner">
-            <button id="btn-prev" class="btn-action w-8 h-8 rounded-lg flex items-center justify-center opacity-40 cursor-not-allowed text-slate-400" disabled title="Previous Page">
-                <i class="fa-solid fa-chevron-left text-xs"></i>
-            </button>
-            <span class="px-2.5 sm:px-3 text-xs font-semibold text-slate-800 tracking-wider select-none whitespace-nowrap">
-                Page 1 of 1
-            </span>
-            <button id="btn-next" class="btn-action w-8 h-8 rounded-lg flex items-center justify-center opacity-40 cursor-not-allowed text-slate-400" disabled title="Next Page">
-                <i class="fa-solid fa-chevron-right text-xs"></i>
-            </button>
-        </div>
-
-        <!-- Right: View Preset Buttons -->
-        <div class="flex items-center gap-1">
-            <button id="btn-top" class="btn-action px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5">
-                <i class="fa-solid fa-arrows-to-dot text-orange-600 text-xs"></i>
-                <span class="hidden md:inline">Top View</span>
-            </button>
-            <button id="btn-iso" class="btn-action px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 active">
-                <i class="fa-solid fa-cube text-emerald-600 text-xs"></i>
-                <span class="hidden md:inline">3D View</span>
-            </button>
-            <button id="btn-reset" class="btn-action w-8 h-8 rounded-xl flex items-center justify-center" title="Reset Camera">
-                <i class="fa-solid fa-rotate-left text-xs"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- Bottom Touch Interaction Hint -->
-    <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-20 glass-panel px-4 py-2 rounded-full text-[11px] text-slate-700 flex items-center gap-2.5 shadow-lg pointer-events-none whitespace-nowrap max-w-[90vw] overflow-hidden">
-        <span class="flex items-center gap-1 text-orange-600 font-semibold">
-            <i class="fa-solid fa-hand-pointer animate-pulse"></i> Touch & Drag to Orbit
-        </span>
-        <span class="text-slate-300">•</span>
-        <span class="text-emerald-700 flex items-center gap-1 font-semibold">
-            <i class="fa-solid fa-up-down text-xs"></i> Tilt for 3D Layer Explosion
-        </span>
+    <div class="top-bar-controls">
+      <button class="btn" id="btnTopView">📐 Top View</button>
+      <button class="btn" id="btn3DView">🎲 3D View</button>
+      <div class="page-indicator" id="pageIndicator">Loading...</div>
+      <button class="btn" id="btnPrev" disabled>◀ Prev</button>
+      <button class="btn btn-primary" id="btnNext">Next ▶</button>
     </div>
+  </div>
 
-    <!-- Hardware Accelerated CSS 3D Viewport -->
-    <div id="viewport">
-        <div id="world_3d">
-            <!-- Base Layer: Main Sheet -->
-            <div id="layer_base" class="paper-layer">
-                <img id="img_base" alt="Base Sheet">
-            </div>
+  <div class="help-tip">Drag to rotate 3D view • Scroll to zoom • Arrow keys / Swipe to flip pages</div>
 
-            <!-- Middle Layer: Scenic Collage -->
-            <div id="layer_middle" class="paper-layer">
-                <img id="img_middle" alt="Scenic Collage">
-            </div>
-
-            <!-- Top Layer: India Map -->
-            <div id="layer_top" class="paper-layer">
-                <img id="img_top" alt="India Map">
-            </div>
-        </div>
+  <div class="viewport" id="viewport">
+    <div class="world" id="world">
+      <div class="book" id="book">
+        <!-- Leaves dynamically injected here -->
+      </div>
     </div>
+  </div>
 
-    <script>
-        // Local file configuration matching directory structure
-        const IMAGE_FILES = {
-            base: 'social front page 2.png',
-            middle: 'social front page 3.png',
-            top: 'social front page india image.png'
-        };
+  <script>
+    const COVER_BASE_NAMES = ['social front page 2.png', 'social front page 2.jpg', 'social front page 2.webp'];
+    const COVER_MID_NAMES = ['social front page 3.png', 'social front page 3.jpg', 'social front page 3.webp'];
+    const COVER_TOP_NAMES = ['social front page india image.png', 'social front page india image.jpg', 'social front page india image.webp', 'social front page map image.png', 'social front page map image.jpg'];
 
-        // 3D Transform State with Inertia / Lerp Physics
-        const state = {
-            rotX: 42,        // Tilt angle in degrees
-            rotY: -18,       // Orbit angle in degrees
-            scale: 0.95,     // Zoom level
-            panX: 0,         // Horizontal pan offset
-            panY: 0,         // Vertical pan offset
-            
-            // Targets for smooth lerping
-            targetRotX: 42,
-            targetRotY: -18,
-            targetScale: 0.95,
-            targetPanX: 0,
-            targetPanY: 0,
+    let currentSpread = 0;
+    let totalSpreads = 1;
+    let leafElements = [];
 
-            // Vertical separation gap config (in pixels)
-            maxZGap: 80,
-            currentZGap: 0
-        };
+    // Camera rotation & scale state
+    let rotX = 0;
+    let rotY = 0;
+    let scale = 1;
+    let isDragging = false;
+    let startMouseX = 0;
+    let startMouseY = 0;
+    let startRotX = 0;
+    let startRotY = 0;
 
-        let loadedCount = 0;
-        const TOTAL_LAYERS = 3;
+    // Swipe gesture tracking
+    let touchStartX = 0;
+    let touchStartY = 0;
 
-        /**
-         * Fast 2D Canvas processor to remove dark backgrounds on load.
-         * Runs once during startup and creates standard transparent image URLs.
-         */
-        function processImageChromaKey(src, options = {}) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
+    const world = document.getElementById('world');
+    const viewport = document.getElementById('viewport');
+    const book = document.getElementById('book');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnTopView = document.getElementById('btnTopView');
+    const btn3DView = document.getElementById('btn3DView');
+    const pageIndicator = document.getElementById('pageIndicator');
+    const sepTag = document.getElementById('sepTag');
 
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    function padNum(n) {
+      return n < 10 ? '0' + n : '' + n;
+    }
 
-                    ctx.drawImage(img, 0, 0);
-
-                    if (options.removeBlack) {
-                        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        const data = imgData.data;
-                        const threshold = options.threshold || 28;
-
-                        for (let i = 0; i < data.length; i += 4) {
-                            const r = data[i];
-                            const g = data[i + 1];
-                            const b = data[i + 2];
-
-                            // Pitch black background check
-                            if (r <= threshold && g <= threshold && b <= threshold) {
-                                data[i + 3] = 0; // Set transparent
-                            } else if (r <= threshold * 1.5 && g <= threshold * 1.5 && b <= threshold * 1.5) {
-                                // Smooth edge feathering
-                                const maxVal = Math.max(r, g, b);
-                                const factor = (maxVal - threshold) / (threshold * 0.5);
-                                data[i + 3] = Math.floor(Math.min(255, Math.max(0, factor * 255)));
-                            }
-                        }
-                        ctx.putImageData(imgData, 0, 0);
-                    }
-
-                    resolve(canvas.toDataURL('image/png'));
-                };
-
-                img.onerror = () => {
-                    console.warn(`Could not load local image: ${src}. Rendering fallback graphic.`);
-                    resolve(generateProceduralFallback(options.type));
-                };
-
-                img.src = encodeURI(src);
-            });
+    // Zero-CORS Image Prober
+    function probeImage(candidates) {
+      return new Promise((resolve) => {
+        let index = 0;
+        function tryNext() {
+          if (index >= candidates.length) {
+            resolve(null);
+            return;
+          }
+          const src = candidates[index++];
+          const img = new Image();
+          img.onload = () => resolve(src);
+          img.onerror = () => tryNext();
+          img.src = encodeURI(src);
         }
+        tryNext();
+      });
+    }
 
-        /**
-         * High quality procedural white paper fallback generator.
-         * Guarantees the document is bright and beautiful even if files are missing.
-         */
-        function generateProceduralFallback(type) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 800;
-            canvas.height = 1131; // A4 aspect ratio
-            const ctx = canvas.getContext('2d');
+    async function probePageNumber(num) {
+      const p = padNum(num);
+      const strNum = '' + num;
+      const candidates = [
+        `${p}.png`, `${p}.jpg`, `${p}.webp`,
+        `${strNum}.png`, `${strNum}.jpg`, `${strNum}.webp`
+      ];
+      return await probeImage(candidates);
+    }
 
-            if (type === 'base') {
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+    async function initBook() {
+      const coverBase = await probeImage(COVER_BASE_NAMES) || 'social front page 2.png';
+      const coverMid = await probeImage(COVER_MID_NAMES) || 'social front page 3.png';
+      const coverTop = await probeImage(COVER_TOP_NAMES) || 'social front page india image.png';
 
-                // Tricolor Border
-                ctx.strokeStyle = '#EA580C';
-                ctx.lineWidth = 12;
-                ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
-
-                ctx.strokeStyle = '#16A34A';
-                ctx.lineWidth = 12;
-                ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
-
-                ctx.fillStyle = '#0F172A';
-                ctx.font = 'bold 42px serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('ONE INDIA, GREAT INDIA', 400, 220);
-
-                ctx.fillStyle = '#EA580C';
-                ctx.font = 'bold 28px sans-serif';
-                ctx.fillText('JAMMU & KASHMIR  vs  TAMIL NADU', 400, 300);
-
-                ctx.fillStyle = '#64748B';
-                ctx.font = '18px sans-serif';
-                ctx.fillText('DIFFERENT LANDS  |  SAME DREAMS  |  ONE NATION', 400, 350);
-
-                ctx.strokeStyle = '#cbd5e1';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(100, 380);
-                ctx.lineTo(700, 380);
-                ctx.stroke();
-
-            } else if (type === 'middle') {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                ctx.fillStyle = 'rgba(234, 88, 12, 0.9)';
-                ctx.beginPath();
-                ctx.roundRect(60, 440, 320, 240, 16);
-                ctx.fill();
-
-                ctx.fillStyle = 'rgba(22, 163, 74, 0.9)';
-                ctx.beginPath();
-                ctx.roundRect(420, 440, 320, 240, 16);
-                ctx.fill();
-
-                ctx.fillStyle = '#FFFFFF';
-                ctx.font = 'bold 24px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Jammu & Kashmir', 220, 570);
-                ctx.fillText('Tamil Nadu', 580, 570);
-
-            } else {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                ctx.fillStyle = '#16A34A';
-                ctx.beginPath();
-                ctx.arc(400, 840, 140, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#FFFFFF';
-                ctx.font = 'bold 24px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('INDIA MAP', 400, 850);
-            }
-
-            return canvas.toDataURL('image/png');
+      // Detect inner pages starting from page 2
+      const innerPages = [];
+      for (let i = 2; i <= 30; i++) {
+        const found = await probePageNumber(i);
+        if (found) {
+          innerPages.push({ pageNum: i, src: found });
+        } else {
+          if (i > 18) break; // Stop after 18 if no higher pages exist
         }
+      }
 
-        function updateProgress() {
-            loadedCount++;
-            const percent = Math.round((loadedCount / TOTAL_LAYERS) * 100);
-            document.getElementById('loading-bar').style.width = percent + '%';
-            document.getElementById('loading-text').innerText = `${loadedCount} / ${TOTAL_LAYERS} Images Processed`;
+      const leavesData = [];
 
-            if (loadedCount >= TOTAL_LAYERS) {
-                const overlay = document.getElementById('loading-overlay');
-                setTimeout(() => {
-                    overlay.classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => overlay.remove(), 500);
-                }, 150);
-            }
-        }
+      // Leaf 0 (Front Cover Leaf)
+      // Front face = 3D Layered Cover
+      // Back face = Page 02 (Left side of Spread 1)
+      const page2Obj = innerPages.find(p => p.pageNum === 2);
+      leavesData.push({
+        isCover: true,
+        coverBase: coverBase,
+        coverMid: coverMid,
+        coverTop: coverTop,
+        backSrc: page2Obj ? page2Obj.src : null,
+        backNum: 2
+      });
 
-        async function initPaperLayers() {
-            // Load base sheet
-            const baseData = await processImageChromaKey(IMAGE_FILES.base, { type: 'base', removeBlack: false });
-            document.getElementById('img_base').src = baseData;
-            updateProgress();
+      // Subsequent Leaves (Leaf 1, 2, 3...)
+      // Leaf 1: Front = Page 03, Back = Page 04
+      // Leaf 2: Front = Page 05, Back = Page 06
+      let pageIdx = 3;
+      while (true) {
+        const frontObj = innerPages.find(p => p.pageNum === pageIdx);
+        const backObj = innerPages.find(p => p.pageNum === pageIdx + 1);
 
-            // Load middle scenic collage
-            const middleData = await processImageChromaKey(IMAGE_FILES.middle, { type: 'middle', removeBlack: true, threshold: 28 });
-            document.getElementById('img_middle').src = middleData;
-            updateProgress();
+        if (!frontObj && !backObj && pageIdx > 18) break;
 
-            // Load top India map
-            const topData = await processImageChromaKey(IMAGE_FILES.top, { type: 'top', removeBlack: true, threshold: 28 });
-            document.getElementById('img_top').src = topData;
-            updateProgress();
-        }
-
-        function setupInteractionHandlers() {
-            const world = document.getElementById('world_3d');
-            let isDragging = false;
-            let lastPointerX = 0;
-            let lastPointerY = 0;
-
-            // Touch gesture tracking
-            let initialPinchDist = 0;
-            let initialScale = 1;
-
-            window.addEventListener('pointerdown', (e) => {
-                if (e.target.closest('header')) return; // Ignore clicks on top navigation
-                isDragging = true;
-                lastPointerX = e.clientX;
-                lastPointerY = e.clientY;
-            });
-
-            window.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
-
-                const deltaX = e.clientX - lastPointerX;
-                const deltaY = e.clientY - lastPointerY;
-
-                // Orbit rotation sensitivity
-                state.targetRotY += deltaX * 0.45;
-                state.targetRotX -= deltaY * 0.45;
-
-                // Clamp tilt rotation range (0 = flat top view, 75 = steep tilt)
-                state.targetRotX = Math.max(0, Math.min(75, state.targetRotX));
-                
-                // Wrap horizontal rotation
-                if (state.targetRotY > 180) state.targetRotY -= 360;
-                if (state.targetRotY < -180) state.targetRotY += 360;
-
-                lastPointerX = e.clientX;
-                lastPointerY = e.clientY;
-            });
-
-            window.addEventListener('pointerup', () => { isDragging = false; });
-            window.addEventListener('pointercancel', () => { isDragging = false; });
-
-            // Wheel Zoom
-            window.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-                state.targetScale = Math.max(0.5, Math.min(2.2, state.targetScale * zoomFactor));
-            }, { passive: false });
-
-            // Mobile Multi-Touch Pinch Zoom
-            window.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 2) {
-                    isDragging = false;
-                    initialPinchDist = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                    initialScale = state.targetScale;
-                }
-            });
-
-            window.addEventListener('touchmove', (e) => {
-                if (e.touches.length === 2 && initialPinchDist > 0) {
-                    const currentDist = Math.hypot(
-                        e.touches[0].clientX - e.touches[1].clientX,
-                        e.touches[0].clientY - e.touches[1].clientY
-                    );
-                    const scaleFactor = currentDist / initialPinchDist;
-                    state.targetScale = Math.max(0.5, Math.min(2.2, initialScale * scaleFactor));
-                }
-            }, { passive: true });
-
-            // Button UI Action Controls
-            const btnTop = document.getElementById('btn-top');
-            const btnIso = document.getElementById('btn-iso');
-            const btnReset = document.getElementById('btn-reset');
-
-            btnTop.addEventListener('click', () => {
-                btnTop.classList.add('active');
-                btnIso.classList.remove('active');
-                state.targetRotX = 0; // Flat top down
-                state.targetRotY = 0;
-                state.targetPanX = 0;
-                state.targetPanY = 0;
-                state.targetScale = 1.0;
-            });
-
-            btnIso.addEventListener('click', () => {
-                btnIso.classList.add('active');
-                btnTop.classList.remove('active');
-                state.targetRotX = 42;
-                state.targetRotY = -18;
-                state.targetScale = 0.95;
-            });
-
-            btnReset.addEventListener('click', () => {
-                btnIso.classList.add('active');
-                btnTop.classList.remove('active');
-                state.targetRotX = 42;
-                state.targetRotY = -18;
-                state.targetPanX = 0;
-                state.targetPanY = 0;
-                state.targetScale = 0.95;
-            });
-        }
-
-        /**
-         * Ultra-smooth animation loop utilizing CSS 3D transform matrices.
-         * Runs on GPU compositor thread at full native device refresh rate (60-120 FPS).
-         */
-        function animationLoop() {
-            // Smooth lerp (linear interpolation) physics
-            const lerpSpeed = 0.12;
-            state.rotX += (state.targetRotX - state.rotX) * lerpSpeed;
-            state.rotY += (state.targetRotY - state.rotY) * lerpSpeed;
-            state.scale += (state.targetScale - state.scale) * lerpSpeed;
-            state.panX += (state.targetPanX - state.panX) * lerpSpeed;
-            state.panY += (state.targetPanY - state.panY) * lerpSpeed;
-
-            // Compute dynamic 3D explosion gap based on tilt angle (rotX)
-            // When rotX is close to 0 (top view), gap shrinks to 0 (flat page)
-            const tiltRatio = Math.min(1, Math.max(0, state.rotX / 50));
-            const targetGap = Math.pow(tiltRatio, 1.2) * state.maxZGap;
-            state.currentZGap += (targetGap - state.currentZGap) * lerpSpeed;
-
-            const gap = state.currentZGap;
-
-            // Apply 3D matrix transform to main world stage
-            const world = document.getElementById('world_3d');
-            world.style.transform = `
-                translate3d(${state.panX}px, ${state.panY}px, 0px)
-                scale(${state.scale})
-                rotateX(${state.rotX}deg)
-                rotateY(${state.rotY}deg)
-            `;
-
-            // Apply Z-axis depth separation to individual layer cards
-            const layerBase = document.getElementById('layer_base');
-            const layerMiddle = document.getElementById('layer_middle');
-            const layerTop = document.getElementById('layer_top');
-
-            layerBase.style.transform = `translateZ(0px)`;
-            layerMiddle.style.transform = `translateZ(${gap}px)`;
-            layerTop.style.transform = `translateZ(${gap * 2.0}px)`;
-
-            requestAnimationFrame(animationLoop);
-        }
-
-        // Initialize application on DOM load
-        window.addEventListener('load', () => {
-            initPaperLayers();
-            setupInteractionHandlers();
-            animationLoop();
+        leavesData.push({
+          isCover: false,
+          frontSrc: frontObj ? frontObj.src : null,
+          frontNum: pageIdx,
+          backSrc: backObj ? backObj.src : null,
+          backNum: pageIdx + 1
         });
-    </script>
+
+        pageIdx += 2;
+      }
+
+      totalSpreads = leavesData.length;
+
+      book.innerHTML = '';
+      leafElements = [];
+
+      leavesData.forEach((data, index) => {
+        const leaf = document.createElement('div');
+        leaf.className = 'leaf';
+        leaf.dataset.index = index;
+
+        // Front Face (rotateY 0deg)
+        const frontFace = document.createElement('div');
+        frontFace.className = 'page-face page-front';
+
+        if (data.isCover) {
+          frontFace.innerHTML = `
+            <div class="cover-container">
+              <img class="cover-layer" id="coverBaseImg" src="${encodeURI(data.coverBase)}" alt="Base Cover Sheet" />
+              <img class="cover-layer cover-layer-screen" id="coverMidImg" src="${encodeURI(data.coverMid)}" alt="Scenic Layer" />
+              <img class="cover-layer cover-layer-screen" id="coverTopImg" src="${encodeURI(data.coverTop)}" alt="Map Layer" />
+            </div>
+          `;
+        } else if (data.frontSrc) {
+          frontFace.innerHTML = `<img class="page-img" src="${encodeURI(data.frontSrc)}" alt="Page ${data.frontNum}" />`;
+        } else {
+          frontFace.innerHTML = `
+            <div class="placeholder-page">
+              <div class="placeholder-title">Page ${padNum(data.frontNum)}</div>
+              <div class="placeholder-sub">One India, Great India</div>
+            </div>
+          `;
+        }
+
+        // Back Face (rotateY 180deg - Unmirrored when flipped -180deg)
+        const backFace = document.createElement('div');
+        backFace.className = 'page-face page-back';
+
+        if (data.backSrc) {
+          backFace.innerHTML = `<img class="page-img" src="${encodeURI(data.backSrc)}" alt="Page ${data.backNum}" />`;
+        } else {
+          backFace.innerHTML = `
+            <div class="placeholder-page">
+              <div class="placeholder-title">Page ${padNum(data.backNum)}</div>
+              <div class="placeholder-sub">One India, Great India</div>
+            </div>
+          `;
+        }
+
+        leaf.appendChild(frontFace);
+        leaf.appendChild(backFace);
+        book.appendChild(leaf);
+        leafElements.push(leaf);
+      });
+
+      updateSpreadView();
+      update3DTransform();
+    }
+
+    function updateSpreadView() {
+      const total = leafElements.length;
+
+      leafElements.forEach((leaf, idx) => {
+        if (idx < currentSpread) {
+          // Leaf flipped to LEFT side (-180deg)
+          leaf.style.transform = 'rotateY(-180deg)';
+          // Newer flipped leaves sit ON TOP on the left stack
+          leaf.style.zIndex = idx + 1;
+        } else {
+          // Leaf unflipped on RIGHT side (0deg)
+          leaf.style.transform = 'rotateY(0deg)';
+          // Newer unflipped leaves sit UNDER older unflipped leaves on the right stack
+          leaf.style.zIndex = total - idx;
+        }
+      });
+
+      btnPrev.disabled = currentSpread === 0;
+      btnNext.disabled = currentSpread >= totalSpreads;
+
+      if (currentSpread === 0) {
+        pageIndicator.textContent = 'Front Cover';
+      } else {
+        const leftPageNum = padNum(currentSpread * 2);
+        const rightPageNum = padNum(currentSpread * 2 + 1);
+        const maxPage = padNum(totalSpreads * 2);
+        pageIndicator.textContent = `Pages ${leftPageNum} - ${rightPageNum} of ${maxPage}`;
+      }
+    }
+
+    function update3DTransform() {
+      rotX = Math.max(-60, Math.min(60, rotX));
+      rotY = Math.max(-180, Math.min(180, rotY));
+
+      world.style.transform = `scale(${scale}) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+
+      // Calculate separation distance based on 3D perspective tilt angle
+      const distFromTop = Math.sqrt(rotX * rotX + rotY * rotY);
+      const zGap = Math.min(70, distFromTop * 1.3);
+
+      const midImg = document.getElementById('coverMidImg');
+      const topImg = document.getElementById('coverTopImg');
+
+      if (midImg && topImg) {
+        if (zGap > 5) {
+          midImg.style.transform = `translateZ(${zGap * 0.5}px)`;
+          topImg.style.transform = `translateZ(${zGap}px)`;
+          sepTag.style.display = 'inline-block';
+        } else {
+          midImg.style.transform = 'translateZ(0px)';
+          topImg.style.transform = 'translateZ(0px)';
+          sepTag.style.display = 'none';
+        }
+      }
+    }
+
+    btnPrev.addEventListener('click', () => {
+      if (currentSpread > 0) {
+        currentSpread--;
+        updateSpreadView();
+      }
+    });
+
+    btnNext.addEventListener('click', () => {
+      if (currentSpread < totalSpreads) {
+        currentSpread++;
+        updateSpreadView();
+      }
+    });
+
+    btnTopView.addEventListener('click', () => {
+      rotX = 0;
+      rotY = 0;
+      scale = 1;
+      update3DTransform();
+    });
+
+    btn3DView.addEventListener('click', () => {
+      rotX = 35;
+      rotY = -25;
+      scale = 0.95;
+      update3DTransform();
+    });
+
+    // Orbit drag controls
+    viewport.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      startMouseX = e.clientX;
+      startMouseY = e.clientY;
+      startRotX = rotX;
+      startRotY = rotY;
+      touchStartX = e.clientX;
+      touchStartY = e.clientY;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - startMouseX;
+      const deltaY = e.clientY - startMouseY;
+
+      rotY = startRotY + deltaX * 0.4;
+      rotX = startRotX - deltaY * 0.4;
+      update3DTransform();
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (isDragging) {
+        const deltaX = e.clientX - touchStartX;
+        const deltaY = Math.abs(e.clientY - touchStartY);
+
+        // Detect horizontal swipe gesture
+        if (Math.abs(deltaX) > 60 && deltaY < 80) {
+          if (deltaX < 0 && currentSpread < totalSpreads) {
+            currentSpread++;
+            updateSpreadView();
+          } else if (deltaX > 0 && currentSpread > 0) {
+            currentSpread--;
+            updateSpreadView();
+          }
+        }
+      }
+      isDragging = false;
+    });
+
+    // Zoom via mouse wheel
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      scale += e.deltaY * -0.001;
+      scale = Math.max(0.5, Math.min(2.2, scale));
+      update3DTransform();
+    }, { passive: false });
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+        if (currentSpread < totalSpreads) {
+          currentSpread++;
+          updateSpreadView();
+        }
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        if (currentSpread > 0) {
+          currentSpread--;
+          updateSpreadView();
+        }
+      }
+    });
+
+    // Start initialization on window load
+    window.onload = () => {
+      initBook();
+    };
+  </script>
 </body>
 </html>
