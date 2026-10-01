@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Worksheet Submitter</title>
@@ -310,7 +310,7 @@
 </head>
 <body>
   <!-- Warning Modal -->
-<div id="warningModal" style="display: flex; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); align-items: center; justify-content: center;">
+<div id="warningModal" style="display: none; position: fixed; z-index: 9999; left: 0px; top: 0px; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); align-items: center; justify-content: center;">
   <div style="background-color: #ffffff; padding: 24px; border-radius: 12px; max-width: 450px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15); font-family: sans-serif; text-align: left;">
     <h3 style="margin-top: 0; color: #d97706; display: flex; align-items: center; gap: 8px;">
       ⚠️ Submission Pacing Notice
@@ -319,10 +319,14 @@
       Worksheets typically require <strong>1 to 2 minutes</strong> to complete naturally (around 10–20 seconds per question). 
     </p>
     <p style="color: #374151; font-size: 14px; line-height: 1.5;">
-      Because the server tracks completion times based on when requests are received, submitting subsequent worksheets too quickly (e.g., only 30 seconds after the last one) can raise flags.
+      Because the server tracks completion times based on when requests 
+are received, submitting subsequent worksheets too quickly (e.g., only 
+30 seconds after the last one) can raise flags.
     </p>
     <p style="color: #4b5563; font-size: 13px; font-style: italic; background-color: #f3f4f6; padding: 10px; border-radius: 6px;">
-      💡 Please wait for a more robust update coming soon that handles timing offsets automatically to prevent this completely. Also by using this bot, you automatically Agree to our <a href="terms.html" class="button-link">Terms & Conditions</a>
+      💡 Please wait for a more robust update coming soon that handles 
+timing offsets automatically to prevent this completely. Also by using 
+this bot, you automatically Agree to our <a href="https://worksheet-mocha.vercel.app/terms.html" class="button-link">Terms &amp; Conditions</a>
 
 
     </p>
@@ -347,15 +351,15 @@
   <form id="submissionForm">
     <div class="form-group">
       <label for="accessLink">Worksheet Access Link / Token</label>
-      <input type="text" id="accessLink" required placeholder="mathiit.live/attempt/abcdefg">
+      <input type="text" id="accessLink" required="" placeholder="mathiit.live/attempt/abcdefg">
     </div>
 
     <div class="form-group">
       <label for="numWrong">Allowed Wrong Answers</label>
-      <input type="number" id="numWrong" min="0" value="0" required>
+      <input type="number" id="numWrong" min="0" value="0" required="">
     </div>
 
-    <button type="submit" id="submitBtn" class="btn-submit">Process & Submit</button>
+    <button type="submit" id="submitBtn" class="btn-submit">Process &amp; Submit</button>
   </form>
 
   <div class="progress-wrapper" id="progressWrapper">
@@ -387,15 +391,33 @@
   const RPC_BASE = `${SUPABASE_URL}/rest/v1/rpc`;
   const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
 
-  const headers = {
-    "apikey": API_KEY,
-    "authorization": `Bearer ${API_KEY}`,
-    "content-type": "application/json",
-    "accept": "application/json",
-    "prefer": "minimal"
-  };
-
   let cooldownTimer = null;
+
+  // Standard headers for PostgREST (/rest/v1/...)
+  function getRestHeaders(accessToken) {
+    return {
+      "accept": "application/json",
+      "apikey": API_KEY,
+      "authorization": `Bearer ${API_KEY}`,
+      "content-profile": "public",
+      "content-type": "application/json",
+      "x-client-info": "supabase-js-web/2.89.0",
+      "x-worksheet-token": accessToken
+    };
+  }
+
+  // Headers specifically for Edge Functions (/functions/v1/...)
+  // EXCLUDES 'content-profile' to prevent CORS preflight blocking
+  function getEdgeHeaders(accessToken) {
+    return {
+      "accept": "application/json",
+      "apikey": API_KEY,
+      "authorization": `Bearer ${API_KEY}`,
+      "content-type": "application/json",
+      "x-client-info": "supabase-js-web/2.89.0"
+      
+    };
+  }
 
   // --- Cooldown Logic ---
   function checkCooldown() {
@@ -404,17 +426,21 @@
     
     if (!cooldownUntil) {
       if (cooldownTimer) clearInterval(cooldownTimer);
-      submitBtn.disabled = false;
-      submitBtn.innerText = "Process & Submit";
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Process & Submit";
+      }
       return false;
     }
 
     const remainingMs = parseInt(cooldownUntil, 10) - Date.now();
 
     if (remainingMs > 0) {
-      submitBtn.disabled = true;
-      const secondsLeft = Math.ceil(remainingMs / 1000);
-      submitBtn.innerText = `Cooldown: ${secondsLeft}s remaining`;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        const secondsLeft = Math.ceil(remainingMs / 1000);
+        submitBtn.innerText = `Cooldown: ${secondsLeft}s remaining`;
+      }
 
       if (!cooldownTimer) {
         cooldownTimer = setInterval(() => {
@@ -431,8 +457,10 @@
         clearInterval(cooldownTimer);
         cooldownTimer = null;
       }
-      submitBtn.disabled = false;
-      submitBtn.innerText = "Process & Submit";
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Process & Submit";
+      }
       return false;
     }
   }
@@ -445,12 +473,13 @@
       cooldownTimer = null;
     }
     const submitBtn = document.getElementById("submitBtn");
-    submitBtn.disabled = false;
-    submitBtn.innerText = "Process & Submit";
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Process & Submit";
+    }
     console.log("🔓 Cooldown override activated! You can now submit immediately.");
   };
 
-  // Run on page load
   window.addEventListener("DOMContentLoaded", () => {
     checkCooldown();
     console.log("💡 Tip: Type 'disableCooldown()' in this console to bypass the submission timer.");
@@ -466,38 +495,21 @@
     const percentTxt = document.getElementById("progressPercent");
     const statusTxt = document.getElementById("statusMessage");
 
-    wrapper.style.display = "block";
-    bar.style.width = `${percent}%`;
-    percentTxt.innerText = `${percent}%`;
-    statusTxt.innerText = message;
+    if (wrapper) wrapper.style.display = "block";
+    if (bar) bar.style.width = `${percent}%`;
+    if (percentTxt) percentTxt.innerText = `${percent}%`;
+    if (statusTxt) statusTxt.innerText = message;
     console.log(`[${percent}%] ${message}`);
   }
 
   function showModal() {
-    document.getElementById("attemptModal").classList.add("active");
+    const modal = document.getElementById("attemptModal");
+    if (modal) modal.classList.add("active");
   }
 
   function closeModal() {
-    document.getElementById("attemptModal").classList.remove("active");
-  }
-
-  async function fetchAttemptByAccessToken(accessToken) {
-    const cleanToken = extractToken(accessToken);
-    const endpoint = `${SUPABASE_URL}/rest/v1/worksheet_attempts?select=id,worksheet_id,student_id,status&access_token=eq.${cleanToken}`;
-    
-    const response = await fetch(endpoint, { method: "GET", headers });
-    if (!response.ok) throw new Error("Network request failed");
-
-    const data = await response.json();
-    if (data && data.length > 0) {
-      return { 
-        attemptId: data[0].id, 
-        worksheetId: data[0].worksheet_id, 
-        studentId: data[0].student_id,
-        status: data[0].status 
-      };
-    }
-    throw new Error("NO_ATTEMPT_FOUND");
+    const modal = document.getElementById("attemptModal");
+    if (modal) modal.classList.remove("active");
   }
 
   function getRandomInt(min, max) {
@@ -509,69 +521,72 @@
     return shuffled.slice(0, size);
   }
 
+  async function fetchAttemptByAccessToken(accessToken, headers) {
+    const cleanToken = extractToken(accessToken);
+    const endpoint = `${SUPABASE_URL}/rest/v1/worksheet_attempts?select=id&access_token=eq.${cleanToken}`;
+    
+    const response = await fetch(endpoint, { method: "GET", headers });
+    if (!response.ok) throw new Error(`Network request failed: ${response.statusText}`);
+
+    const data = await response.json();
+    if (data && data.length > 0) {
+      return data[0].id;
+    }
+    throw new Error("NO_ATTEMPT_FOUND");
+  }
+
   document.getElementById("submissionForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     
     if (checkCooldown()) return;
 
     const submitBtn = document.getElementById("submitBtn");
-    submitBtn.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
 
     const accessLink = document.getElementById("accessLink").value.trim();
-    const numWrong = parseInt(document.getElementById("numWrong").value, 10);
-    let gradeUrl = `${RPC_BASE}/grade-attempt`;
+    const cleanToken = extractToken(accessLink);
+    const numWrong = parseInt(document.getElementById("numWrong").value, 10) || 0;
+    
+    // Separate header sets
+    const restHeaders = getRestHeaders(cleanToken);
+    const edgeHeaders = getEdgeHeaders(cleanToken);
 
     try {
       updateProgress(10, "Retrieving attempt metadata...");
       
-      let attemptData;
+      let attemptId;
       try {
-        attemptData = await fetchAttemptByAccessToken(accessLink);
+        attemptId = await fetchAttemptByAccessToken(cleanToken, restHeaders);
       } catch (err) {
         if (err.message === "NO_ATTEMPT_FOUND") {
           showModal();
           updateProgress(0, "Awaiting valid attempt initialization...");
-          submitBtn.disabled = false;
+          if (submitBtn) submitBtn.disabled = false;
           return;
         }
         throw err;
       }
 
-      const { attemptId, worksheetId, studentId } = attemptData;
-      if (!studentId) throw new Error("Could not extract student_id from attempt dataset.");
+      updateProgress(25, "Fetching question metrics & answer keys...");
 
-      updateProgress(25, "Fetching question metrics...");
+      // 1. Initialize answer keys via PostgREST RPC
+      await fetch(`${RPC_BASE}/student_attempt_answer_keys`, {
+        method: "POST",
+        headers: restHeaders,
+        body: JSON.stringify({ p_attempt_id: attemptId })
+      });
 
-      let questions = [];
-      const edgeHeaders = {
-        "Content-Type": "application/json",
-        "apikey": API_KEY,
-        "Authorization": `Bearer ${API_KEY}`
-      };
+      // 2. Fetch questions from Edge Function (uses edgeHeaders)
+      const gradeRes = await fetch(`${FUNCTIONS_BASE}/grade-attempt`, {
+        method: "POST",
+        headers: edgeHeaders,
+        body: JSON.stringify({ attempt_id: attemptId, access_token: cleanToken })
+      });
 
-      try {
-        let resGrade = await fetch(gradeUrl, {
-          method: "POST",
-          headers: edgeHeaders,
-          body: JSON.stringify({ attempt_id: attemptId })
-        });
+      if (!gradeRes.ok) throw new Error(`Grade function failed with status ${gradeRes.status}`);
 
-        if (resGrade.status === 404) {
-          gradeUrl = `${FUNCTIONS_BASE}/grade-attempt`;
-          resGrade = await fetch(gradeUrl, {
-            method: "POST",
-            headers: edgeHeaders,
-            body: JSON.stringify({ attempt_id: attemptId })
-          });
-        }
-
-        if (resGrade.ok) {
-          const gradeJson = await resGrade.json();
-          questions = gradeJson.questions || [];
-        }
-      } catch (err) {
-        console.error("Grade fetch error:", err.message);
-      }
+      const gradeData = await gradeRes.json();
+      const questions = gradeData.questions || [];
 
       if (!questions || questions.length === 0) {
         throw new Error("Failed to load question dataset.");
@@ -579,96 +594,94 @@
 
       updateProgress(50, "Generating responses & timing parameters...");
 
-      const targetWrong = Math.min(numWrong, questions.length);
-      const wrongIndices = new Set(getRandomSample([...Array(questions.length).keys()], targetWrong));
+      const totalQuestions = questions.length;
+      const targetWrong = Math.min(numWrong, totalQuestions);
+      const targetCorrect = Math.max(0, totalQuestions - targetWrong);
+      
+      const allIndices = Array.from({ length: totalQuestions }, (_, i) => i);
+      const correctIndices = new Set(getRandomSample(allIndices, targetCorrect));
 
+      let currentTime = new Date();
       let totalSeconds = 0;
-      questions.forEach(() => { totalSeconds += getRandomInt(9, 20); });
-
-      let currentTime = new Date(Date.now() - (totalSeconds * 1000));
       const pResponses = [];
-      const restUpsertRows = [];
 
       questions.forEach((q, idx) => {
         const qId = q.question_id;
         const correctAns = q.correct_answer;
         const options = q.options || ["A", "B", "C", "D"];
 
-        let chosenAns = correctAns;
-        if (wrongIndices.has(idx)) {
-          const wrongOptions = options.filter(opt => String(opt) !== String(correctAns));
-          chosenAns = wrongOptions.length ? wrongOptions[getRandomInt(0, wrongOptions.length - 1)] : "A";
-        }
+        const timeSpent = getRandomInt(8, 20);
+        totalSeconds += timeSpent;
 
-        const timeSpent = getRandomInt(9, 20);
-        const tFirst = new Date(currentTime.getTime() + getRandomInt(1, 3) * 1000);
-        const tLast = new Date(tFirst.getTime() + getRandomInt(0, 2) * 1000);
-        const strAns = String(chosenAns);
+        const lag = getRandomInt(1, 2);
+        currentTime = new Date(currentTime.getTime() + (timeSpent + lag) * 1000);
+        const timestampStr = currentTime.toISOString();
+
+        let studentAnswer;
+        if (correctIndices.has(idx)) {
+          studentAnswer = correctAns;
+        } else {
+          const wrongOptions = options.filter(opt => String(opt) !== String(correctAns));
+          studentAnswer = wrongOptions.length ? wrongOptions[getRandomInt(0, wrongOptions.length - 1)] : "A";
+        }
 
         pResponses.push({
           attempt_id: attemptId,
-          worksheet_attempt_id: attemptId,
           question_id: qId,
-          selected_option: strAns,
-          student_answer: strAns,
+          student_answer: String(studentAnswer),
           is_skipped: false,
           time_spent_seconds: timeSpent,
           answer_changes: 1,
-          first_answer_at: tFirst.toISOString(),
-          last_answer_at: tLast.toISOString()
+          first_answer_at: timestampStr,
+          last_answer_at: timestampStr
         });
-
-        restUpsertRows.push({
-          attempt_id: attemptId,
-          question_id: qId,
-          student_answer: strAns,
-          is_skipped: false,
-          time_spent_seconds: timeSpent,
-          first_answer_at: tFirst.toISOString(),
-          last_answer_at: tLast.toISOString()
-        });
-
-        currentTime = new Date(currentTime.getTime() + timeSpent * 1000);
       });
 
       updateProgress(70, "Upserting data into Supabase...");
 
-      await fetch(`${RPC_BASE}/upsert_responses`, {
+      const upsertRes = await fetch(`${RPC_BASE}/upsert_responses`, {
         method: "POST",
-        headers,
+        headers: restHeaders,
+        body: JSON.stringify({ p_responses: pResponses })
+      });
+
+      if (!upsertRes.ok) throw new Error("Upsert responses failed.");
+
+      updateProgress(85, "Submitting worksheet...");
+
+      const submitRes = await fetch(`${RPC_BASE}/worksheet_attempt_submit`, {
+        method: "POST",
+        headers: restHeaders,
         body: JSON.stringify({ 
-          p_responses: pResponses 
+          p_attempt_id: attemptId, 
+          p_access_token: cleanToken 
         })
       });
 
-      const restHeaders = { ...headers, "Prefer": "resolution=merge-duplicates" };
-      await fetch(`${SUPABASE_URL}/rest/v1/attempt_responses`, {
+      if (!submitRes.ok) throw new Error("Worksheet submission failed.");
+
+      // Post-submission recalculations (Edge Function)
+      await fetch(`${FUNCTIONS_BASE}/grade-attempt`, {
+        method: "POST",
+        headers: edgeHeaders,
+        body: JSON.stringify({ attempt_id: attemptId, access_token: cleanToken })
+      });
+
+      // Post-submission review details (PostgREST RPC)
+      await fetch(`${RPC_BASE}/worksheet_review_question_details`, {
         method: "POST",
         headers: restHeaders,
-        body: JSON.stringify(restUpsertRows)
+        body: JSON.stringify({ p_attempt_id: attemptId, p_access_token: cleanToken })
       });
-
-      updateProgress(85, "Submitting worksheet & calculating ranks...");
-
-      await fetch(`${SUPABASE_URL}/rest/v1/worksheet_attempts?id=eq.${attemptId}`, {
-        method: "PATCH",
-        headers,
-        body: JSON.stringify({ status: "submitted", time_spent_seconds: totalSeconds })
-      });
-
-      await fetch(gradeUrl, { method: "POST", headers: edgeHeaders, body: JSON.stringify({ attempt_id: attemptId }) });
-      await fetch(`${RPC_BASE}/get_student_answer_baseline`, { method: "POST", headers, body: JSON.stringify({ p_student_id: studentId }) });
 
       updateProgress(95, "Syncing metadata to database storage...");
 
       const vercelPayload = {
-        student_id: studentId,
         access_link: accessLink,
         timestamp: new Date().toISOString(),
         attempt_id: attemptId,
-        worksheet_id: worksheetId,
         num_wrong: targetWrong,
-        total_questions: questions.length
+        total_questions: totalQuestions
       };
 
       await fetch(VERCEL_DB_ENDPOINT, {
@@ -679,7 +692,6 @@
 
       updateProgress(100, "Completed successfully!");
 
-      // --- Set Cooldown Lock ---
       const unlockTime = Date.now() + (totalSeconds * 1000);
       localStorage.setItem("submit_cooldown_until", unlockTime.toString());
       checkCooldown();
@@ -696,5 +708,6 @@
   });
 </script>
 
-</body>
-</html>
+
+
+</body></html>
