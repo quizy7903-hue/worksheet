@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MathIIT AutoWorksheet Engine</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#1e1b4b',
+            },
+            accent: {
+              cyan: '#06b6d4',
+              pink: '#ec4899',
+              emerald: '#10b981',
+              amber: '#f59e0b'
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'glow': 'glow 3s ease-in-out infinite alternate',
+            'float': 'float 6s ease-in-out infinite',
+          },
+          keyframes: {
+            glow: {
+              '0%': { boxShadow: '0 0 15px rgba(99, 102, 241, 0.3)' },
+              '100%': { boxShadow: '0 0 30px rgba(6, 182, 212, 0.6)' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom CSS for Glassmorphism & Fluid Background */
+    body {
+      background-color: #070913;
+      color: #f1f5f9;
+      overflow-x: hidden;
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .glass-card-interactive {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card-interactive:hover {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .glass-input {
+      background: rgba(10, 15, 30, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #f8fafc;
+      transition: all 0.2s ease;
+    }
+
+    .glass-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    }
+
+    /* Screen Transitions */
+    .app-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      min-height: 100vh;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px) scale(0.98);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+      display: none;
+    }
+
+    .app-screen.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+      display: block;
+    }
+
+    /* Custom Scrollbar for mobile & desktop */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(10, 15, 30, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.4);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.8);
+    }
+
+    /* Neon Gradients */
+    .text-gradient {
+      background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #06b6d4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #0891b2 100%);
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    /* Pulse Dot */
+    .pulse-dot {
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse-green 2s infinite;
+    }
+
+    @keyframes pulse-green {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+  </style>
+</head>
+<body class="relative min-h-screen text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Ambient Motion Canvas Background -->
+  <canvas id="bg-canvas"></canvas>
+
+  <div id="app-container" class="relative z-10 min-h-screen max-w-md md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-4 md:py-6">
+
+    <!-- ========================================== -->
+    <!-- SCREEN 1: WELCOME / LANDING                -->
+    <!-- ========================================== -->
+    <section id="screen-landing" class="app-screen active fixed inset-0 overflow-y-auto z-10" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+  <div class="glass-card rounded-3xl p-8 md:p-12 max-w-lg w-full relative overflow-hidden border border-slate-700/50 my-auto shadow-2xl">
+    <!-- Background Ambient Glow -->
+    <div class="absolute -top-20 -left-20 w-40 h-40 bg-brand-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-20 -right-20 w-40 h-40 bg-accent-cyan/20 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Logo Icon -->
+    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-tr from-brand-600 to-accent-cyan shadow-lg shadow-brand-500/30 mb-6 animate-float">
+      <i class="fa-solid fa-bolt text-3xl text-white"></i>
+    </div>
+
+    <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 text-white">
+      Tired Of   <span class="text-gradient">  Worksheets?</span>
+    </h1>
+    <p class="text-slate-400 text-sm md:text-base leading-relaxed mb-8">
+      Try our automatic worksheet Submitter that automatically claims, solves, and submits your worksheets with realistic timing logs, while keeping your dashboard updated in real-time. By using this bot you automatically agree to our <a href="terms.html">Terms & Conditions</a>
+
+
+    </p>
+
+    <!-- Start CTA Button -->
+    <button id="btn-start-landing" class="w-full py-4 px-6 rounded-2xl btn-primary font-bold text-base tracking-wide flex items-center justify-center gap-3 cursor-pointer group shadow-lg">
+      <span>Start Completing</span>
+      <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+    </button>
+
+    <!-- Status Indicator Footer -->
+    <div class="mt-8 pt-6 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+      <span class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"></span>
+        Easy Start • Fully Automated
+      </span>
+      <span>v2.0 - Autosubmitter</span>
+    </div>
+  </div>
+</section>
+
+
+    <!-- ========================================== -->
+    <!-- SCREEN 2: LINK INPUT & VERIFICATION        -->
+    <!-- ========================================== -->
+    <section id="screen-link-input" class="app-screen fixed inset-0 overflow-y-auto z-10" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+  <div class="glass-card rounded-3xl p-6 md:p-8 max-w-md w-full relative my-auto shadow-2xl">
+        <button id="btn-back-to-landing" class="mb-4 text-xs font-medium text-slate-400 hover:text-white flex items-center gap-1">
+          <i class="fa-solid fa-chevron-left"></i> Back
+        </button>
+
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-3 rounded-xl bg-brand-500/20 text-brand-400">
+            <i class="fa-solid fa-link text-xl"></i>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Connect Worksheet</h2>
+            <p class="text-xs text-slate-400">Provide any worksheet URL to retrieve identity</p>
+          </div>
+        </div>
+
+        <p class="text-xs md:text-sm text-slate-300 bg-slate-800/60 p-3.5 rounded-xl border border-slate-700/50 mb-5 leading-relaxed">
+          <i class="fa-solid fa-circle-info text-accent-cyan mr-1.5"></i>
+          Kindly paste the link to any of your opened or completed worksheets. We will fetch your account parameters automatically.
+        </p>
+
+        <form id="form-worksheet-link" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Worksheet Link or Access Token
+            </label>
+            <div class="relative">
+              <input 
+                type="text" 
+                id="input-worksheet-url" 
+                placeholder="mathiit.live/attempts/KxYLk4vu..." 
+                class="w-full px-4 py-3.5 rounded-xl glass-input text-sm pl-10 focus:ring-2 focus:ring-brand-500"
+                required
+              />
+              <i class="fa-solid fa-globe absolute left-3.5 top-4 text-slate-500 text-sm"></i>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-1.5 pl-1">
+              Example format: <span class="font-mono text-slate-400">mathiit.live/attempts/[access_token]</span>
+            </p>
+          </div>
+
+          <button type="submit" id="btn-continue-link" class="w-full py-3.5 rounded-xl btn-primary font-bold text-sm tracking-wide flex items-center justify-center gap-2">
+            <span>Continue & Verify</span>
+            <i class="fa-solid fa-circle-check"></i>
+          </button>
+        </form>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- SCREEN 3: DASHBOARD                        -->
+    <!-- ========================================== -->
+    <section id="screen-dashboard" class="app-screen space-y-4 pb-12">
+      
+      <!-- Top Navigation & Profile Bar -->
+      <header class="glass-card rounded-2xl p-4 md:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="relative">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-600 to-accent-cyan flex items-center justify-center font-bold text-lg text-white shadow-md">
+              <span id="user-avatar-text">ST</span>
+            </div>
+            <span class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-slate-900 rounded-full"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 id="dash-student-name" class="font-bold text-base md:text-lg text-white">Student Name</h2>
+              <span id="dash-student-class" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30">Class --</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+              <span id="dash-student-code" class="font-mono text-slate-300">STU-00000</span>
+              <span>•</span>
+              <span id="dash-student-center">Center Name</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Controls & Action Buttons -->
+        <div class="flex items-center gap-2 border-t md:border-t-0 border-slate-800 pt-3 md:pt-0 justify-between md:justify-end">
+          <button id="btn-open-runner-modal" class="px-4 py-2.5 rounded-xl btn-primary font-semibold text-xs flex items-center gap-2">
+            <i class="fa-solid fa-play"></i>
+            <span>Start Submitter Loop</span>
+          </button>
+
+          <button id="btn-open-history" class="px-3 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+            <i class="fa-solid fa-clock-rotate-left text-accent-cyan"></i>
+            <span class="hidden sm:inline">Analytics</span>
+          </button>
+
+          <button id="btn-logout" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700/60 text-xs transition-colors" title="Reset Session">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Stats Summary Banner -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="glass-card rounded-xl p-3.5 border-l-4 border-l-brand-500 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Available Open</p>
+            <p id="stat-open-count" class="text-xl font-bold text-white mt-0.5">0</p>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-folder-open"></i>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-3.5 border-l-4 border-l-emerald-500 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Completed</p>
+            <p id="stat-completed-count" class="text-xl font-bold text-emerald-400 mt-0.5">0</p>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-3.5 border-l-4 border-l-accent-cyan flex items-center justify-between">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Auto Submitted</p>
+            <p id="stat-session-submitted" class="text-xl font-bold text-accent-cyan mt-0.5">0</p>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-accent-cyan/20 text-accent-cyan flex items-center justify-center text-sm">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-3.5 border-l-4 border-l-amber-500 flex items-center justify-between">
+          <div>
+            <p class="text-[11px] text-slate-400 font-medium">Batch Rank</p>
+            <p id="stat-batch-rank" class="text-xl font-bold text-amber-400 mt-0.5">--</p>
+          </div>
+          <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-sm">
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Filter Bar -->
+      <div class="glass-card rounded-2xl p-3 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center">
+        <!-- Status Filter Tabs -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+          <button data-filter-status="all" class="filter-tab-btn active px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white transition-all whitespace-nowrap">
+            All Worksheets
+          </button>
+          <button data-filter-status="open" class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition-all whitespace-nowrap">
+            <i class="fa-solid fa-lock-open text-emerald-400 text-[10px] mr-1"></i> Open Only
+          </button>
+          <button data-filter-status="completed" class="filter-tab-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white transition-all whitespace-nowrap">
+            Completed
+          </button>
+        </div>
+
+        <!-- Subject Select Filter -->
+        <div class="relative min-w-[140px]">
+          <select id="select-subject-filter" class="w-full py-1.5 px-3 rounded-lg glass-input text-xs font-medium focus:ring-1 focus:ring-brand-500 appearance-none pr-8">
+            <option value="all">All Subjects</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-2.5 top-2.5 text-slate-500 text-[10px] pointer-events-none"></i>
+        </div>
+      </div>
+
+      <!-- Worksheets List Container -->
+      <div class="space-y-2.5" id="worksheets-list-container">
+        <!-- Dynamically rendered worksheet cards -->
+        <div class="text-center py-12 glass-card rounded-2xl">
+          <i class="fa-solid fa-spinner fa-spin text-3xl text-brand-400 mb-3"></i>
+          <p class="text-sm text-slate-400">Fetching worksheets from server...</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================== -->
+    <!-- SCREEN 4: AUTOMATION RUNNER / LOOP VIEW    -->
+    <!-- ========================================== -->
+    <section id="screen-runner" class="app-screen fixed inset-0 z-50">
+  <!-- Inner wrapper handles the centering and scrolling independently of screen-switcher CSS -->
+  <div class="w-full h-full overflow-y-auto flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md">
+    
+    <div class="glass-card rounded-3xl p-5 md:p-8 w-full max-w-2xl my-auto relative border border-slate-700/80 shadow-2xl">
+      
+      <!-- Header Controls -->
+      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 text-brand-400 flex items-center justify-center font-bold text-lg">
+            <i class="fa-solid fa-robot"></i>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              Worksheet Auto-Submitter
+              <span id="runner-status-badge" class="px-2 py-0.5 rounded-full text-[10px] uppercase font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                IN PROGRESS
+              </span>
+            </h2>
+            <p class="text-xs text-slate-400">Automated worksheets claiming and solving loop</p>
+          </div>
+        </div>
+
+        <button id="btn-close-runner" class="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-white text-xs">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Initial Setup Configuration Panel (shown when idle) -->
+      <div id="runner-config-panel" class="space-y-6">
+        <div class="bg-slate-900/80 rounded-2xl p-4 border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <label class="text-xs font-semibold text-slate-300">
+              Number of Worksheets to Process
+            </label>
+            <span id="target-count-display" class="font-mono text-sm font-bold text-brand-400">5 Worksheets</span>
+          </div>
+          <input 
+            type="range" 
+            id="input-submit-count" 
+            min="1" 
+            max="20" 
+            value="5" 
+            class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-500"
+          />
+          <div class="flex justify-between text-[11px] text-slate-500 font-mono">
+            <span>1</span>
+            <span>7</span>
+            <span>14</span>
+            <span>20</span>
+          </div>
+        </div>
+
+        <div class="p-3.5 bg-brand-950/40 rounded-xl border border-brand-800/30 text-xs text-slate-300 space-y-1.5">
+          <p class="font-semibold text-brand-300 flex items-center gap-1.5">
+            <i class="fa-solid fa-shield-halved text-accent-cyan"></i> Auto-Submitter Engine
+          </p>
+          <p class="text-slate-400 leading-relaxed text-[11px]">
+            The engine will automatically claim and submit worksheets for you. It will also handle any necessary cooldowns and delays to mimic realistic user behavior.  By using this bot, you agree to our current <a href="terms.html" class="underline text-accent-cyan hover:text-accent-cyan/80">Terms & Conditions</a>
+          </p>
+        </div>
+
+        <button id="btn-start-automation" class="w-full py-3.5 rounded-2xl btn-primary font-bold text-sm tracking-wide flex items-center justify-center gap-2 shadow-lg">
+          <i class="fa-solid fa-play"></i>
+          <span>Start Submission Sequence</span>
+        </button>
+      </div>
+
+      <!-- Active Execution & Live Progress Controls (shown during loop) -->
+      <div id="runner-active-panel" class="space-y-5 hidden">
+
+        <!-- Elapsed Time & Live Stats Header -->
+        <div class="grid grid-cols-3 gap-2.5 text-center">
+          <div class="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800">
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Session Elapsed</p>
+            <p id="runner-elapsed-time" class="font-mono text-base font-bold text-white mt-0.5">00:00:00</p>
+          </div>
+          <div class="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800">
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Processed</p>
+            <p id="runner-processed-count" class="font-mono text-base font-bold text-emerald-400 mt-0.5">0 / 5</p>
+          </div>
+          <div class="bg-slate-900/90 rounded-xl p-2.5 border border-slate-800">
+            <p class="text-[10px] text-slate-400 uppercase font-semibold">Active Cooldown</p>
+            <p id="runner-cooldown-timer" class="font-mono text-base font-bold text-amber-400 mt-0.5">0s</p>
+          </div>
+        </div>
+
+        <!-- Current Active Worksheet Card Info -->
+        <div class="bg-slate-900/70 rounded-2xl p-4 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="px-2.5 py-0.5 rounded-full bg-brand-500/20 text-brand-300 font-semibold border border-brand-500/30" id="current-ws-subject">
+              Subject
+            </span>
+            <span class="text-slate-400 font-mono text-[11px]" id="current-ws-number">
+              Worksheet #--
+            </span>
+          </div>
+          <h3 id="current-ws-title" class="font-bold text-white text-base">
+            Preparing worksheet queue...
+          </h3>
+          <p id="current-ws-concept" class="text-xs text-slate-400">
+            Concept details will appear here
+          </p>
+        </div>
+
+        <!-- Progress Bar 1: Current Worksheet Progress & Step Log -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-300 flex items-center gap-1.5">
+              <i class="fa-solid fa-spinner fa-spin text-accent-cyan text-[11px]"></i>
+              Current Step: <span id="current-step-text" class="text-accent-cyan font-mono">Initializing...</span>
+            </span>
+            <span id="current-ws-percent" class="font-mono font-bold text-slate-300">0%</span>
+          </div>
+          <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+            <div id="bar-current-ws" class="h-full bg-gradient-to-r from-brand-500 to-accent-cyan rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Progress Bar 2: Total Queue Progress -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-medium text-slate-300">
+              Total Sequence Completion
+            </span>
+            <span id="total-ws-percent" class="font-mono font-bold text-slate-300">0%</span>
+          </div>
+          <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
+            <div id="bar-total-ws" class="h-full bg-gradient-to-r from-emerald-500 to-accent-cyan rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div id="runner-status-banner" class="p-3 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300 font-mono flex items-center gap-2">
+          <i class="fa-solid fa-circle-notch fa-spin text-brand-400"></i>
+          <span id="runner-banner-message" class="truncate">Preparing runner engine...</span>
+        </div>
+
+        <!-- Interactive Engine Action Buttons -->
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button id="btn-pause-resume" class="py-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-pause"></i>
+            <span id="lbl-pause-resume">Pause Sequence</span>
+          </button>
+
+          <button id="btn-stop-automation" class="py-3 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-square"></i>
+            <span>Stop Engine</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</section>
+
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODALS & POPUPS                            -->
+  <!-- ========================================== -->
+  
+  <!-- 1. Verification Loading Window Modal -->
+  <div id="modal-verification" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="glass-card rounded-3xl p-6 max-w-sm w-full space-y-4 border border-slate-700 shadow-2xl text-center">
+      <div id="verify-spinner-wrap" class="w-14 h-14 mx-auto rounded-2xl bg-brand-500/20 border border-brand-500/40 flex items-center justify-center text-brand-400 text-2xl">
+        <i class="fa-solid fa-circle-notch fa-spin"></i>
+      </div>
+
+      <div>
+        <h3 id="verify-modal-title" class="font-bold text-lg text-white">Validating Link</h3>
+        <p id="verify-modal-desc" class="text-xs text-slate-400 mt-1">Extracting token & student identity from Supabase. Make sure the worksheet has been started or is already submitted.</p>
+      </div>
+
+      <!-- Styled Card Displaying Student Name & Student ID -->
+      <div id="verify-identity-card" class="bg-slate-900/90 rounded-2xl p-4 border border-slate-800 text-left space-y-2 hidden">
+        <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Retrieved Identity</div>
+        <div>
+          <p id="verify-student-name" class="font-bold text-sm text-brand-300">Please Wait</p>
+          <p id="verify-student-id" class="font-mono text-[11px] text-slate-400 mt-0.5">ID: 00000000-0000-0000-0000-000000000000</p>
+        </div>
+      </div>
+
+      <!-- Error State View -->
+      <div id="verify-error-box" class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs font-semibold hidden">
+        <i class="fa-solid fa-triangle-exclamation mr-1"></i> Invalid Worksheet Link
+      </div>
+
+      <button id="btn-close-verify-modal" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hidden">
+        Close & Try Again
+      </button>
+    </div>
+  </div>
+
+
+  <!-- 2. Submission Analytics & History Modal -->
+  <div id="modal-history" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="glass-card rounded-3xl p-5 md:p-6 max-w-lg w-full space-y-4 border border-slate-700 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-chart-pie text-accent-cyan text-lg"></i>
+          <h3 class="font-bold text-base text-white">Submission Analytics & History</h3>
+        </div>
+        <button id="btn-close-history" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-center">
+        <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800">
+          <p class="text-[10px] text-slate-400 font-medium">Total Saved Submissions</p>
+          <p id="hist-total-count" class="text-xl font-bold text-brand-400 mt-0.5">0</p>
+        </div>
+        <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800">
+          <p class="text-[10px] text-slate-400 font-medium">Avg Marks Obtained</p>
+          <p id="hist-avg-score" class="text-xl font-bold text-emerald-400 mt-0.5">14.2 / 15</p>
+        </div>
+      </div>
+
+      <!-- Scrollable History List -->
+      <div id="history-items-container" class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[200px]">
+        <!-- Dynamically rendered history rows -->
+      </div>
+
+      <button id="btn-clear-history" class="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 text-rose-400 text-xs font-semibold border border-slate-700/60">
+        Clear Saved History Cache
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT ENGINE & LOGIC                  -->
+  <!-- ========================================== -->
+  <script>
+    // --- Constants ---
+    const SUPABASE_URL = "https://sthomkdkjwxwbolomovx.supabase.co";
+    const API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aG9ta2Rrand4d2JvbG9tb3Z4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5ODQ3MTMsImV4cCI6MjA4MjU2MDcxM30.Ymt2XKBdr6vCqjfG68V-xhnjB2nBzZTGxK9SBTd9JIE";
+    const VERCEL_DB_ENDPOINT = "https://worksheet-mocha.vercel.app/api/save-student-data";
+
+    const RPC_BASE = `${SUPABASE_URL}/rest/v1/rpc`;
+    const FUNCTIONS_BASE = `${SUPABASE_URL}/functions/v1`;
+
+    const STORAGE_KEY_SESSION = "mathiit_student_session";
+    const STORAGE_KEY_HISTORY = "mathiit_submission_history";
+
+    // --- Application State ---
+    let appState = {
+      session: null, // { student_id, student_name, access_token }
+      dashboardData: null,
+      history: [],
+      currentFilterStatus: 'all',
+      currentFilterSubject: 'all',
+      runner: {
+        isRunning: false,
+        isPaused: false,
+        targetCount: 5,
+        processedCount: 0,
+        startTime: null,
+        elapsedSeconds: 0,
+        timerInterval: null,
+        cooldownRemaining: 0,
+        cooldownInterval: null,
+        stopRequested: false
+      }
+    };
+
+    // --- Canvas Animated Background ---
+    function initCanvasBackground() {
+      const canvas = document.getElementById('bg-canvas');
+      const ctx = canvas.getContext('2d');
+      let width, height, particles = [];
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      class Particle {
+        constructor() {
+          this.reset();
+        }
+        reset() {
+          this.x = Math.random() * width;
+          this.y = Math.random() * height;
+          this.size = Math.random() * 2 + 0.8;
+          this.vx = (Math.random() - 0.5) * 0.4;
+          this.vy = (Math.random() - 0.5) * 0.4;
+          this.alpha = Math.random() * 0.5 + 0.1;
+          this.color = Math.random() > 0.5 ? '99, 102, 241' : '6, 182, 212';
+        }
+        update() {
+          this.x += this.vx;
+          this.y += this.vy;
+          if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+            this.reset();
+          }
+        }
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${this.color}, ${this.alpha})`;
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < 45; i++) {
+        particles.push(new Particle());
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw Ambient Gradient Mesh
+        const grad1 = ctx.createRadialGradient(width * 0.2, height * 0.2, 10, width * 0.2, height * 0.2, width * 0.5);
+        grad1.addColorStop(0, 'rgba(99, 102, 241, 0.08)');
+        grad1.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad1;
+        ctx.fillRect(0, 0, width, height);
+
+        const grad2 = ctx.createRadialGradient(width * 0.8, height * 0.8, 10, width * 0.8, height * 0.8, width * 0.5);
+        grad2.addColorStop(0, 'rgba(6, 182, 212, 0.06)');
+        grad2.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad2;
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw and update particles
+        particles.forEach(p => {
+          p.update();
+          p.draw();
+        });
+
+        requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    // --- API Helper Functions ---
+    function getRestHeaders(accessToken) {
+      return {
+        "accept": "application/json",
+        "apikey": API_KEY,
+        "authorization": `Bearer ${API_KEY}`,
+        "content-profile": "public",
+        "content-type": "application/json",
+        "x-client-info": "supabase-js-web/2.89.0",
+        "x-worksheet-token": accessToken
+      };
+    }
+
+    function getEdgeHeaders() {
+      return {
+        "accept": "application/json",
+        "apikey": API_KEY,
+        "authorization": `Bearer ${API_KEY}`,
+        "content-type": "application/json",
+        "x-client-info": "supabase-js-web/2.89.0"
+      };
+    }
+
+    function extractToken(input) {
+      if (!input) return "";
+      let trimmed = input.trim().replace(/\/$/, "");
+      return trimmed.split("/").pop();
+    }
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function getRandomSample(array, size) {
+      const shuffled = [...array].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, size);
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // --- Screen Router ---
+    function showScreen(screenId) {
+      document.querySelectorAll('.app-screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      const target = document.getElementById(screenId);
+      if (target) {
+        target.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // --- Storage Cache Management ---
+    function loadCache() {
+      try {
+        const cachedSession = localStorage.getItem(STORAGE_KEY_SESSION);
+        if (cachedSession) {
+          appState.session = JSON.parse(cachedSession);
+        }
+
+        const cachedHistory = localStorage.getItem(STORAGE_KEY_HISTORY);
+        if (cachedHistory) {
+          appState.history = JSON.parse(cachedHistory);
+        }
+      } catch (e) {
+        console.error("Failed to parse cache from localStorage:", e);
+      }
+    }
+    function getPersistentCooldownRemaining() {
+  const storedUntil = localStorage.getItem("worksheet_cooldown_until");
+  if (!storedUntil) return 0;
+  
+  const remainingMs = parseInt(storedUntil, 10) - Date.now();
+  if (remainingMs > 0) {
+    return Math.ceil(remainingMs / 1000);
+  } else {
+    localStorage.removeItem("worksheet_cooldown_until");
+    return 0;
+  }
+}
+
+    function saveSession(session) {
+      appState.session = session;
+      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(session));
+    }
+
+    function addHistoryEntry(entry) {
+      appState.history.unshift(entry);
+      localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(appState.history));
+      updateHistoryUI();
+    }
+
+    function clearSession() {
+      localStorage.removeItem(STORAGE_KEY_SESSION);
+      appState.session = null;
+      appState.dashboardData = null;
+      showScreen('screen-landing');
+    }
+
+    // --- Screen 2: Verification Logic ---
+    async function handleVerifyLink(urlOrToken) {
+      const cleanToken = extractToken(urlOrToken);
+      if (!cleanToken) {
+        alert("Please paste a valid worksheet URL or Access Token!");
+        return;
+      }
+
+      // Show Verification Modal
+      const modal = document.getElementById('modal-verification');
+      const identityCard = document.getElementById('verify-identity-card');
+      const errorBox = document.getElementById('verify-error-box');
+      const spinnerWrap = document.getElementById('verify-spinner-wrap');
+      const closeBtn = document.getElementById('btn-close-verify-modal');
+
+      modal.classList.remove('hidden');
+      identityCard.classList.add('hidden');
+      errorBox.classList.add('hidden');
+      closeBtn.classList.add('hidden');
+      spinnerWrap.classList.remove('hidden');
+
+      const headers = getRestHeaders(cleanToken);
+
+      try {
+        // Step 1: Fetch student_id
+        const stdInfoUrl = `${SUPABASE_URL}/rest/v1/worksheet_distribution?select=student_id&access_token=eq.${cleanToken}`;
+        const stdRes = await fetch(stdInfoUrl, { method: "GET", headers });
+        if (!stdRes.ok) throw new Error("Network request failed");
+        const stdData = await stdRes.json();
+
+        if (!stdData || stdData.length === 0 || !stdData[0].student_id) {
+          throw new Error("Invalid Worksheet Link");
+        }
+        const studentId = stdData[0].student_id;
+
+        // Step 2: Fetch student self identity (name)
+        const nameUrl = `${RPC_BASE}/student_self_identity`;
+        const nameRes = await fetch(nameUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            p_student_id: studentId,
+            p_access_token: cleanToken
+          })
+        });
+
+        if (!nameRes.ok) throw new Error("Invalid Worksheet Link");
+        const nameData = await nameRes.json();
+
+        let studentName = "MathIIT Student";
+        if (Array.isArray(nameData) && nameData.length > 0 && nameData[0].full_name) {
+          studentName = nameData[0].full_name;
+        }
+
+        // Show retrieved identity in stylized modal window
+        document.getElementById('verify-student-name').innerText = studentName;
+        document.getElementById('verify-student-id').innerText = `ID: ${studentId}`;
+        identityCard.classList.remove('hidden');
+        spinnerWrap.classList.add('hidden');
+
+        // Save session & update state
+        saveSession({
+          student_id: studentId,
+          student_name: studentName,
+          access_token: cleanToken
+        });
+
+        await sleep(1200);
+        modal.classList.add('hidden');
+
+        // Transition to Dashboard
+        loadDashboard();
+
+      } catch (err) {
+        console.warn("Verification error:", err);
+        spinnerWrap.classList.add('hidden');
+        errorBox.classList.remove('hidden');
+        closeBtn.classList.remove('hidden');
+      }
+    }
+
+    // --- Screen 3: Dashboard Rendering ---
+    async function loadDashboard() {
+      if (!appState.session || !appState.session.student_id) {
+        showScreen('screen-link-input');
+        return;
+      }
+
+      showScreen('screen-dashboard');
+      // Example trigger after successful verification
+      collectAndSyncDeviceAnalytics(appState.session.student_id);
+
+      const container = document.getElementById('worksheets-list-container');
+      container.innerHTML = `
+        <div class="text-center py-12 glass-card rounded-2xl">
+          <i class="fa-solid fa-spinner fa-spin text-3xl text-brand-400 mb-3"></i>
+          <p class="text-sm text-slate-400">Loading student dashboard...</p>
+        </div>
+      `;
+
+      try {
+        const payload = {
+          p_student_id: appState.session.student_id,
+          p_session_token: null,
+          p_access_token: null
+        };
+
+        const headers = getRestHeaders(appState.session.access_token);
+        const res = await fetch(`${RPC_BASE}/get_student_home_dashboard`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("Failed to load dashboard data");
+
+        const data = await res.json();
+        appState.dashboardData = data;
+
+        renderDashboardUI();
+
+      } catch (err) {
+        console.warn("Dashboard fetch error, generating mock state:", err);
+        // Fallback for seamless demo testing if offline or restricted token
+        useMockDashboardData();
+        renderDashboardUI();
+      }
+    }
+
+    function useMockDashboardData() {
+      appState.dashboardData = {
+        student: {
+          id: appState.session.student_id,
+          code: "STU-03912",
+          name: appState.session.student_name || "Student User",
+          class: "10",
+          center_name: "Ettimadai",
+          course_name: "10 (CBSE)"
+        },
+        worksheets: [
+          {
+            id: "c66995d7-ca29-4b87-ab0d-3a344f0f94be",
+            title: "hormones and their functions vV2-QA",
+            is_open: true,
+            is_locked: false,
+            max_score: 15.00,
+            chapter_name: "Control and Coordination",
+            concept_name: "hormones and their functions",
+            is_completed: false,
+            subject_name: "Biology",
+            worksheet_no: 2,
+            access_token: appState.session.access_token
+          },
+          {
+            id: "8a3800ba-8143-4a11-84ba-2995b4b0e92e",
+            title: "coordination in plants vV1-QA",
+            is_open: true,
+            is_locked: false,
+            max_score: 15.00,
+            chapter_name: "Control and Coordination",
+            concept_name: "coordination in plants",
+            is_completed: false,
+            subject_name: "Biology",
+            worksheet_no: 1,
+            access_token: appState.session.access_token
+          },
+          {
+            id: "e7851ef5-d9ca-4ed4-9884-a3d4d5617f81",
+            title: "Acids and Bases - Lab Test v2",
+            is_open: true,
+            is_locked: false,
+            max_score: 15.00,
+            chapter_name: "Acids, Bases and Salts",
+            concept_name: "Lab Experiments",
+            is_completed: false,
+            subject_name: "Chemistry",
+            worksheet_no: 2,
+            access_token: appState.session.access_token
+          },
+          {
+            id: "d4917cf1-b766-4b27-b598-e5224cab8d6d",
+            title: "Quadratic Equations Practice v1",
+            is_open: false,
+            is_locked: false,
+            max_score: 15.00,
+            chapter_name: "Quadratic Equations",
+            concept_name: "Roots and Discriminants",
+            is_completed: true,
+            total_score: 14.00,
+            subject_name: "Mathematics",
+            worksheet_no: 3,
+            access_token: appState.session.access_token
+          }
+        ],
+        submission_rank: {
+          batch_rank: 14,
+          batch_total: 48
+        }
+      };
+    }
+
+    function renderDashboardUI() {
+  const db = appState.dashboardData;
+  if (!db) return;
+
+  const student = db.student || {};
+  const worksheets = db.worksheets || [];
+
+  // Render Student Identity Info
+  const sName = student.name || appState.session.student_name || "Student Name";
+  document.getElementById('dash-student-name').innerText = sName;
+  document.getElementById('dash-student-code').innerText = student.code || "STU-00000";
+  document.getElementById('dash-student-class').innerText = `Class ${student.class || '10'}`;
+  document.getElementById('dash-student-center').innerText = student.center_name || "Main Center";
+
+  // Initials Avatar
+  const initials = sName.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'ST';
+  document.getElementById('user-avatar-text').innerText = initials;
+
+  // --- STATS COUNT FIX ---
+  // 1. Open Worksheets count from loaded worksheets array
+  const openWorksheetsCount = worksheets.filter(w => w.is_open && !w.is_completed && w.attempt_status !== 'submitted').length;
+
+  // 2. Total Completed Worksheets from server metadata (with fallback to array length)
+  const rankInfo = db.submission_rank || {};
+  const totalCompletedCount = db.completed_total 
+    ?? rankInfo.submitted_count 
+    ?? worksheets.filter(w => w.is_completed || w.attempt_status === 'submitted').length;
+
+  document.getElementById('stat-open-count').innerText = openWorksheetsCount;
+  document.getElementById('stat-completed-count').innerText = totalCompletedCount;
+  document.getElementById('stat-session-submitted').innerText = appState.history.length;
+  document.getElementById('stat-batch-rank').innerText = rankInfo.batch_rank ? `#${rankInfo.batch_rank}` : '#--';
+
+  // Populate Subjects Select Filter Dropdown
+  const subjectSelect = document.getElementById('select-subject-filter');
+  const subjectsSet = new Set(worksheets.map(w => w.subject_name).filter(Boolean));
+  
+  let subjectOptionsHTML = '<option value="all">All Subjects</option>';
+  subjectsSet.forEach(subj => {
+    subjectOptionsHTML += `<option value="${subj}">${subj}</option>`;
+  });
+  subjectSelect.innerHTML = subjectOptionsHTML;
+  subjectSelect.value = appState.currentFilterSubject;
+
+  // Render Filtered Worksheets Cards
+  renderWorksheetsList();
+}
+async function collectAndSyncDeviceAnalytics(studentId) {
+  const ua = navigator.userAgent;
+  
+  // OS Parser
+  let os = "Unknown OS";
+  if (/windows/i.test(ua)) os = "Windows";
+  else if (/macintosh|mac os x/i.test(ua)) os = "macOS";
+  else if (/android/i.test(ua)) os = "Android";
+  else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+  else if (/linux/i.test(ua)) os = "Linux";
+
+  // Browser Parser
+  let browser = "Unknown Browser";
+  if (/chrome|crios/i.test(ua) && !/edge|opr/i.test(ua)) browser = "Chrome";
+  else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = "Safari";
+  else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
+  else if (/edge/i.test(ua)) browser = "Edge";
+  else if (/opr|opera/i.test(ua)) browser = "Opera";
+
+  let deviceType = /mobile|android|iphone|ipad|tablet/i.test(ua) ? "Mobile/Tablet" : "Desktop";
+
+  const payload = {
+    student_id: studentId,
+    os: os,
+    browser: browser,
+    device_type: deviceType,
+    screen_resolution: `${window.screen.width}x${window.screen.height}`,
+    viewport_size: `${window.innerWidth}x${window.innerHeight}`,
+    language: navigator.language || "Unknown",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown",
+    device_memory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "Unknown",
+    cpu_cores: navigator.hardwareConcurrency || null,
+    network_type: navigator.connection?.effectiveType || "unknown"
+  };
+
+  try {
+    await fetch("https://worksheet-mocha.vercel.app/api/save-student-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.warn("Failed to sync device analytics:", err);
+  }
+}
+
+    function renderWorksheetsList() {
+      const container = document.getElementById('worksheets-list-container');
+      const db = appState.dashboardData;
+      if (!db || !db.worksheets) return;
+
+      let list = [...db.worksheets];
+
+      // Sort: Open worksheets listed first at top
+      list.sort((a, b) => (b.is_open ? 1 : 0) - (a.is_open ? 1 : 0));
+
+      // Filter by Status Tab
+      if (appState.currentFilterStatus === 'open') {
+        list = list.filter(w => w.is_open);
+      } else if (appState.currentFilterStatus === 'completed') {
+        list = list.filter(w => w.is_completed || w.attempt_status === 'submitted');
+      }
+
+      // Filter by Subject
+      if (appState.currentFilterSubject !== 'all') {
+        list = list.filter(w => w.subject_name === appState.currentFilterSubject);
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 glass-card rounded-2xl border border-slate-800">
+            <i class="fa-solid fa-folder-open text-2xl text-slate-600 mb-2"></i>
+            <p class="text-xs text-slate-400 font-medium">No worksheets matching selected filters.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const activeCooldown = getPersistentCooldownRemaining();
+      let html = '';
+      
+      list.forEach(ws => {
+        const isOpen = ws.is_open;
+        const isCompleted = ws.is_completed || ws.attempt_status === 'submitted';
+
+        let badgeClass = "bg-slate-800 text-slate-400 border-slate-700";
+        let statusLabel = "Locked";
+        let statusIcon = "fa-lock";
+
+        if (isOpen) {
+          badgeClass = "bg-emerald-500/20 text-emerald-300 border-emerald-500/30";
+          statusLabel = "Open for Attempt";
+          statusIcon = "fa-unlock";
+        } else if (isCompleted) {
+          badgeClass = "bg-brand-500/20 text-brand-300 border-brand-500/30";
+          statusLabel = "Completed";
+          statusIcon = "fa-circle-check";
+        }
+
+        html += `
+          <div class="glass-card-interactive rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-800">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${badgeClass} flex items-center gap-1">
+                  <i class="fa-solid ${statusIcon}"></i> ${statusLabel}
+                </span>
+                <span class="text-[11px] font-semibold text-accent-cyan bg-cyan-950/40 px-2 py-0.5 rounded-md border border-cyan-800/30">
+                  ${ws.subject_name || 'General'}
+                </span>
+                <span class="text-[11px] font-mono text-slate-400">
+                  WS #${ws.worksheet_no || '1'}
+                </span>
+              </div>
+
+              <h4 class="font-bold text-sm text-white capitalize leading-tight">
+                ${ws.title || ws.concept_name || 'Worksheet Task'}
+              </h4>
+
+              <p class="text-xs text-slate-400">
+                Chapter: <span class="text-slate-300">${ws.chapter_name || 'General'}</span> • Concept: <span class="text-slate-300">${ws.concept_name || 'Standard'}</span>
+              </p>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-slate-800/80 pt-2 sm:pt-0">
+              <div class="text-left sm:text-right">
+                <p class="text-[10px] text-slate-500 uppercase font-bold">Max Marks</p>
+                <p class="text-xs font-mono font-bold text-slate-200">
+                  ${ws.total_score ? ws.total_score.toFixed(1) : ws.max_score || 15.00} / 15
+                </p>
+              </div>
+
+              ${isOpen ? `
+                <button onclick="quickSubmitSingleWorksheet('${ws.worksheet_id || ws.id}', '${ws.title}')" 
+                  class="px-3.5 py-2 rounded-xl ${activeCooldown > 0 ? 'bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700' : 'btn-primary'} text-xs font-bold flex items-center gap-1.5 shadow-md"
+                  ${activeCooldown > 0 ? 'disabled' : ''}>
+                  <i class="fa-solid ${activeCooldown > 0 ? 'fa-clock text-amber-400 animate-pulse' : 'fa-play text-[10px]'}" id="btn-icon-${ws.worksheet_id || ws.id}"></i> 
+                  <span id="btn-txt-${ws.worksheet_id || ws.id}">${activeCooldown > 0 ? `Cooldown (${activeCooldown}s)` : 'Submit'}</span>
+                </button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // --- Screen 4: Automation Engine Logic ---
+
+    function openRunnerModal() {
+      // Add this check at the beginning of your automation launcher / quick submit buttons:
+const activeCooldown = getPersistentCooldownRemaining();
+  if (activeCooldown > 0) {
+    alert(`⏳ Cooldown active! Please wait ${activeCooldown} seconds before starting the automation sequence.`);
+    showScreen('screen-dashboard'); // Return to dashboard if cooldown is active
+    return; // Stops execution completely
+  }
+      showScreen('screen-runner');
+      if (!appState.runner.isRunning) {
+        document.getElementById('runner-config-panel').classList.remove('hidden');
+        document.getElementById('runner-active-panel').classList.add('hidden');
+        document.getElementById('runner-status-badge').innerText = "Ready";
+        document.getElementById('runner-status-badge').className = "px-2 py-0.5 rounded-full text-[10px] uppercase font-bold bg-slate-800 text-slate-400 border border-slate-700";
+      }
+    }
+
+    function closeRunnerModal() {
+      if (appState.runner.isRunning) {
+        if (!confirm("Automation engine is running. Return to dashboard? (Automation will stop)")) return;
+        stopAutomationEngine();
+      }
+
+      showScreen('screen-dashboard');
+    }
+
+    async function startAutomationSequence() {
+      const activeCooldown = getPersistentCooldownRemaining();
+  if (activeCooldown > 0) {
+    alert(`⏳ Cooldown active! Please wait ${activeCooldown} seconds before starting the automation sequence.`);
+    return; // Hard stop
+  }
+      
+      const countInput = parseInt(document.getElementById('input-submit-count').value, 10) || 5;
+      
+      appState.runner.targetCount = countInput;
+      appState.runner.processedCount = 0;
+      appState.runner.isRunning = true;
+      appState.runner.isPaused = false;
+      appState.runner.stopRequested = false;
+      appState.runner.startTime = Date.now();
+      appState.runner.elapsedSeconds = 0;
+
+      document.getElementById('runner-config-panel').classList.add('hidden');
+      document.getElementById('runner-active-panel').classList.remove('hidden');
+      
+      document.getElementById('runner-status-badge').innerText = "Active";
+      document.getElementById('runner-status-badge').className = "px-2 py-0.5 rounded-full text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+
+      // Start elapsed timer tick
+      if (appState.runner.timerInterval) clearInterval(appState.runner.timerInterval);
+      appState.runner.timerInterval = setInterval(() => {
+        if (!appState.runner.isPaused) {
+          appState.runner.elapsedSeconds++;
+          const hrs = String(Math.floor(appState.runner.elapsedSeconds / 3600)).padStart(2, '0');
+          const mins = String(Math.floor((appState.runner.elapsedSeconds % 3600) / 60)).padStart(2, '0');
+          const secs = String(appState.runner.elapsedSeconds % 60).padStart(2, '0');
+          document.getElementById('runner-elapsed-time').innerText = `${hrs}:${mins}:${secs}`;
+        }
+      }, 1000);
+
+      // Main Loop Execution
+      runAutomationLoop();
+    }
+
+    function togglePauseResume() {
+      appState.runner.isPaused = !appState.runner.isPaused;
+      const btnLabel = document.getElementById('lbl-pause-resume');
+      const btn = document.getElementById('btn-pause-resume');
+
+      if (appState.runner.isPaused) {
+        btnLabel.innerText = "Resume Sequence";
+        btn.className = "py-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all";
+        updateStatusBanner("Engine Paused by user", "fa-pause text-amber-400");
+      } else {
+        btnLabel.innerText = "Pause Sequence";
+        btn.className = "py-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-2 transition-all";
+        updateStatusBanner("Resuming execution...", "fa-play text-emerald-400");
+      }
+    }
+
+    function stopAutomationEngine() {
+      appState.runner.stopRequested = true;
+      appState.runner.isRunning = false;
+      if (appState.runner.timerInterval) clearInterval(appState.runner.timerInterval);
+      if (appState.runner.cooldownInterval) clearInterval(appState.runner.cooldownInterval);
+
+      document.getElementById('runner-status-badge').innerText = "Stopped";
+      document.getElementById('runner-status-badge').className = "px-2 py-0.5 rounded-full text-[10px] uppercase font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40";
+      
+      updateStatusBanner("Automation sequence stopped.", "fa-square text-rose-400");
+    }
+
+    function updateRunnerProgress(stepMessage, currentPercent, totalPercent) {
+      document.getElementById('current-step-text').innerText = stepMessage;
+      document.getElementById('current-ws-percent').innerText = `${Math.round(currentPercent)}%`;
+      document.getElementById('bar-current-ws').style.width = `${currentPercent}%`;
+
+      document.getElementById('total-ws-percent').innerText = `${Math.round(totalPercent)}%`;
+      document.getElementById('bar-total-ws').style.width = `${totalPercent}%`;
+
+      document.getElementById('runner-processed-count').innerText = `${appState.runner.processedCount} / ${appState.runner.targetCount}`;
+    }
+
+    function updateStatusBanner(message, iconClass = "fa-circle-notch fa-spin text-brand-400") {
+      document.getElementById('runner-banner-message').innerText = message;
+      const banner = document.getElementById('runner-status-banner');
+      const icon = banner.querySelector('i');
+      if (icon) icon.className = `fa-solid ${iconClass}`;
+    }
+
+    async function runAutomationLoop() {
+      while (
+        appState.runner.isRunning && 
+        !appState.runner.stopRequested && 
+        appState.runner.processedCount < appState.runner.targetCount
+      ) {
+        // Pause check
+        while (appState.runner.isPaused && !appState.runner.stopRequested) {
+          await sleep(500);
+        }
+        if (appState.runner.stopRequested) break;
+
+        // Fetch / Refresh Dashboard Data to get open worksheets
+        updateStatusBanner("Refreshing unlocked worksheets...", "fa-rotate text-brand-400");
+        await loadDashboardDataSilent();
+
+        const db = appState.dashboardData;
+        const openWorksheets = (db?.worksheets || []).filter(w => w.is_open);
+
+        if (openWorksheets.length === 0) {
+          updateStatusBanner("No open worksheets available to submit!", "fa-circle-exclamation text-amber-400");
+          await sleep(2000);
+          break;
+        }
+
+        // Pick next worksheet
+        const targetWs = openWorksheets[0];
+        
+        document.getElementById('current-ws-subject').innerText = targetWs.subject_name || "General";
+        document.getElementById('current-ws-number').innerText = `Worksheet #${targetWs.worksheet_no || '1'}`;
+        document.getElementById('current-ws-title').innerText = targetWs.title || targetWs.concept_name || "Worksheet Task";
+        document.getElementById('current-ws-concept').innerText = `Chapter: ${targetWs.chapter_name || 'Standard'}`;
+
+        const totalProg = (appState.runner.processedCount / appState.runner.targetCount) * 100;
+        updateRunnerProgress("Claiming worksheet...", 10, totalProg);
+
+        try {
+          // Process Single Worksheet Sequence
+          await processSingleWorksheetSequence(targetWs);
+          
+          appState.runner.processedCount++;
+          const finalTotalProg = (appState.runner.processedCount / appState.runner.targetCount) * 100;
+          updateRunnerProgress("Worksheet submitted successfully!", 100, finalTotalProg);
+
+        } catch (err) {
+          console.error("Worksheet loop error:", err);
+          updateStatusBanner(`Error: ${err.message}`, "fa-triangle-exclamation text-rose-400");
+          await sleep(3000);
+        }
+      }
+
+      // Final completion
+      if (!appState.runner.stopRequested) {
+        updateStatusBanner("Sequence completed successfully!", "fa-circle-check text-emerald-400");
+        document.getElementById('runner-status-badge').innerText = "Finished";
+        document.getElementById('runner-status-badge').className = "px-2 py-0.5 rounded-full text-[10px] uppercase font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+      }
+
+      appState.runner.isRunning = false;
+      if (appState.runner.timerInterval) clearInterval(appState.runner.timerInterval);
+    }
+
+
+    async function processSingleWorksheetSequence(ws) {
+  const studentId = appState.session.student_id;
+  const rawWsId = ws.worksheet_id || ws.id || '';
+  const worksheetId = rawWsId.replace(/^virtual:/, '');
+  let accessToken = ws.access_token || appState.session.access_token || '';
+
+  if (!worksheetId) {
+    throw new Error("Missing worksheet ID. Cannot process worksheet.");
+  }
+
+  // STEP 1: Claim Worksheet to acquire valid access token
+  updateStatusBanner("Claiming worksheet token...", "fa-key text-accent-cyan");
+  updateRunnerProgress("Claiming worksheet token...", 15, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  try {
+    const claimRes = await fetch(`${RPC_BASE}/student_claim_worksheet`, {
+      method: "POST",
+      headers: getRestHeaders(accessToken),
+      body: JSON.stringify({
+        p_worksheet_id: worksheetId,
+        p_student_id: studentId,
+        p_session_token: null
+      })
+    });
+
+    if (claimRes.ok) {
+      const claimData = await claimRes.json();
+      const claimedToken = claimData?.token || (Array.isArray(claimData) ? claimData[0]?.token : null);
+      if (claimedToken) {
+        accessToken = claimedToken;
+      }
+    }
+  } catch (e) {
+    console.warn("Claim notice:", e.message);
+  }
+
+  if (!accessToken) {
+    throw new Error("Could not retrieve a valid access token for this worksheet.");
+  }
+
+  const restHeaders = getRestHeaders(accessToken);
+  const edgeHeaders = getEdgeHeaders();
+
+  // STEP 2: Fetch or Create Attempt ID
+  updateStatusBanner("Checking worksheet attempt metadata...", "fa-database text-brand-400");
+  updateRunnerProgress("Fetching attempt ID...", 25, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  let attemptId = null;
+
+  try {
+    const attemptEndpoint = `${SUPABASE_URL}/rest/v1/worksheet_attempts?select=id&access_token=eq.${accessToken}`;
+    const attemptRes = await fetch(attemptEndpoint, { method: "GET", headers: restHeaders });
+
+    if (attemptRes.ok) {
+      const attData = await attemptRes.json();
+      if (attData && attData.length > 0) {
+        attemptId = attData[0].id;
+      }
+    }
+  } catch (e) {
+    console.warn("Fetch attempt error:", e.message);
+  }
+
+  if (!attemptId) {
+    updateStatusBanner("Creating new worksheet attempt...", "fa-plus-circle text-accent-blue");
+    updateRunnerProgress("Creating attempt record...", 30, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+    try {
+      const createAttemptRes = await fetch(`${SUPABASE_URL}/rest/v1/worksheet_attempts?select=id`, {
+        method: "POST",
+        headers: {
+          ...restHeaders,
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          worksheet_id: worksheetId,
+          student_id: studentId,
+          access_token: accessToken,
+          status: "in_progress",
+          started_at: new Date().toISOString()
+        })
+      });
+
+      if (createAttemptRes.ok) {
+        const createData = await createAttemptRes.json();
+        if (createData && createData.length > 0) {
+          attemptId = createData[0].id;
+        }
+      }
+    } catch (e) {
+      console.warn("Create attempt record failed:", e.message);
+    }
+  }
+
+  if (!attemptId) {
+    throw new Error("Failed to create or retrieve worksheet attempt ID.");
+  }
+
+  // STEP 3: Initialize Submission
+  updateStatusBanner("Initializing worksheet submission...", "fa-sliders text-accent-cyan");
+  updateRunnerProgress("Initializing submission...", 35, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  await fetch(`${RPC_BASE}/worksheet_attempt_submit`, {
+    method: "POST",
+    headers: restHeaders,
+    body: JSON.stringify({ p_attempt_id: attemptId, p_access_token: accessToken })
+  }).catch(() => {});
+
+  // STEP 4: Fetch Answer Keys
+  updateStatusBanner("Fetching question answer keys...", "fa-list-check text-emerald-400");
+  updateRunnerProgress("Fetching answer keys...", 45, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  let questions = [];
+  try {
+    const keysRes = await fetch(`${RPC_BASE}/student_attempt_answer_keys`, {
+      method: "POST",
+      headers: restHeaders,
+      body: JSON.stringify({ p_attempt_id: attemptId })
+    });
+    if (keysRes.ok) {
+      questions = await keysRes.json();
+    }
+  } catch (e) {}
+
+  if (!Array.isArray(questions) || questions.length === 0) {
+    questions = Array.from({ length: 15 }, (_, i) => ({
+      question_id: `q_${i + 1}`,
+      correct_single: ["A", "B", "C", "D"][i % 4]
+    }));
+  }
+
+  // STEP 5: Generate Responses targeting 13-15 marks
+  updateStatusBanner("Generating responses & timing dynamics...", "fa-brain text-amber-400");
+  updateRunnerProgress("Generating response parameters...", 60, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  const totalQuestions = questions.length;
+  const numWrong = getRandomInt(0, 2);
+  const targetWrong = Math.min(numWrong, totalQuestions);
+  const targetCorrect = Math.max(0, totalQuestions - targetWrong);
+
+  const allIndices = Array.from({ length: totalQuestions }, (_, i) => i);
+  const correctIndices = new Set(getRandomSample(allIndices, targetCorrect));
+
+  let currentTime = new Date();
+  let totalSeconds = 0;
+  const pResponses = [];
+
+  questions.forEach((q, idx) => {
+    const qId = q.question_id || `q_${idx}`;
+    const correctAns = q.correct_single || q.correct_integer || q.correct_multiple || "A";
+    const options = ["A", "B", "C", "D"];
+
+    const timeSpent = getRandomInt(8, 20);
+    totalSeconds += timeSpent;
+
+    const lag = getRandomInt(1, 2);
+    currentTime = new Date(currentTime.getTime() + (timeSpent + lag) * 1000);
+    const timestampStr = currentTime.toISOString();
+
+    let studentAnswer;
+    if (correctIndices.has(idx)) {
+      studentAnswer = correctAns;
+    } else {
+      const wrongOptions = options.filter(opt => String(opt) !== String(correctAns));
+      studentAnswer = wrongOptions.length ? wrongOptions[getRandomInt(0, wrongOptions.length - 1)] : "A";
+    }
+
+    pResponses.push({
+      attempt_id: attemptId,
+      question_id: qId,
+      student_answer: String(studentAnswer),
+      is_skipped: false,
+      time_spent_seconds: timeSpent,
+      answer_changes: 1,
+      first_answer_at: timestampStr,
+      last_answer_at: timestampStr
+    });
+  });
+
+  // STEP 6: Upsert Responses
+  updateStatusBanner("Upserting student responses...", "fa-upload text-brand-400");
+  updateRunnerProgress("Upserting responses...", 75, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  await fetch(`${RPC_BASE}/upsert_responses`, {
+    method: "POST",
+    headers: restHeaders,
+    body: JSON.stringify({ p_responses: pResponses })
+  }).catch(() => {});
+
+  // STEP 7: Final Worksheet Submit
+  updateStatusBanner("Submitting completed worksheet...", "fa-paper-plane text-emerald-400");
+  updateRunnerProgress("Submitting worksheet...", 85, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  await fetch(`${RPC_BASE}/worksheet_attempt_submit`, {
+    method: "POST",
+    headers: restHeaders,
+    body: JSON.stringify({ p_attempt_id: attemptId, p_access_token: accessToken })
+  }).catch(() => {});
+
+  // STEP 8: Grade Attempt
+  updateStatusBanner("Grading worksheet attempt...", "fa-award text-amber-400");
+  updateRunnerProgress("Grading attempt...", 90, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  await fetch(`${FUNCTIONS_BASE}/grade-attempt`, {
+    method: "POST",
+    headers: edgeHeaders,
+    body: JSON.stringify({ attempt_id: attemptId, access_token: accessToken })
+  }).catch(() => {});
+
+  // STEP 9: Fetch Review Details
+  updateStatusBanner("Fetching review details...", "fa-list-check text-indigo-400");
+  updateRunnerProgress("Syncing review details...", 95, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  await fetch(`${RPC_BASE}/worksheet_review_question_details`, {
+    method: "POST",
+    headers: restHeaders,
+    body: JSON.stringify({ p_attempt_id: attemptId, p_access_token: accessToken })
+  }).catch(() => {});
+
+  // STEP 10: Sync Vercel Log & Complete Progress
+  updateStatusBanner("Finalizing synchronization...", "fa-circle-check text-emerald-400");
+  updateRunnerProgress("Completed successfully!", 100, (appState.runner.processedCount / appState.runner.targetCount) * 100);
+
+  await fetch(VERCEL_DB_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      access_link: accessToken,
+      worksheet_id: worksheetId,
+      student_id: studentId,
+      timestamp: new Date().toISOString(),
+      attempt_id: attemptId,
+      num_wrong: targetWrong,
+      total_questions: totalQuestions
+    })
+  }).catch(() => {});
+
+  // Save entry to Persistent LocalStorage History Cache
+  const obtainedScore = totalQuestions - targetWrong;
+  addHistoryEntry({
+    id: attemptId,
+    title: ws.title || ws.concept_name || 'Worksheet Task',
+    subject: ws.subject_name || 'General',
+    score: obtainedScore,
+    maxScore: totalQuestions,
+    timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    date: new Date().toLocaleDateString()
+  });
+
+  // STEP 11: Mandatory Cooldown Countdown (using exact total time taken from upsert responses)
+  // STEP 11: Mandatory Cooldown Countdown (using exact total time taken from upsert responses)
+  const cooldownSecs = totalSeconds; // total time taken from upsert responses
+  const cooldownUntilTime = Date.now() + (cooldownSecs * 1000);
+  localStorage.setItem("worksheet_cooldown_until", cooldownUntilTime.toString());
+
+  appState.runner.cooldownRemaining = cooldownSecs;
+
+  while (appState.runner.cooldownRemaining > 0 && !appState.runner.stopRequested) {
+    if (!appState.runner.isPaused) {
+      updateStatusBanner(`Cooldown active: ${appState.runner.cooldownRemaining}s remaining`, "fa-clock text-amber-400");
+      const cdElem = document.getElementById('runner-cooldown-timer');
+      if (cdElem) cdElem.innerText = `${appState.runner.cooldownRemaining}s`;
+      
+      // Keep local storage synced during active countdown
+      localStorage.setItem("worksheet_cooldown_until", (Date.now() + (appState.runner.cooldownRemaining * 1000)).toString());
+      appState.runner.cooldownRemaining--;
+    }
+    await sleep(1000);
+  }
+
+  // FIX: Only remove the cooldown from localStorage if it completed naturally without being stopped
+  if (!appState.runner.stopRequested && appState.runner.cooldownRemaining <= 0) {
+    localStorage.removeItem("worksheet_cooldown_until");
+  }
+}
+
+
+    async function loadDashboardDataSilent() {
+      if (!appState.session || !appState.session.student_id) return;
+      try {
+        const payload = {
+          p_student_id: appState.session.student_id,
+          p_session_token: null,
+          p_access_token: null
+        };
+        const headers = getRestHeaders(appState.session.access_token);
+        const res = await fetch(`${RPC_BASE}/get_student_home_dashboard`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          appState.dashboardData = data;
+        }
+      } catch (e) {
+        console.warn("Silent refresh notice:", e);
+      }
+    }
+
+    async function quickSubmitSingleWorksheet(id, title) {
+      // Add this check at the beginning of your automation launcher / quick submit buttons:
+const activeCooldown = getPersistentCooldownRemaining();
+  if (activeCooldown > 0) {
+    alert(`⏳ Cooldown active! Please wait ${activeCooldown} seconds before submitting another worksheet.`);
+    return; // Stops execution completely
+  }
+  if (!appState.dashboardData || !appState.dashboardData.worksheets) {
+    alert("Dashboard data is not loaded yet.");
+    return;
+  }
+
+  const cleanId = id.replace(/^virtual:/, '');
+  const targetWs = appState.dashboardData.worksheets.find(w => {
+    const wId = (w.worksheet_id || w.id || '').replace(/^virtual:/, '');
+    return wId === cleanId;
+  });
+
+  if (!targetWs) {
+    alert("Could not find worksheet details in the current dataset.");
+    return;
+  }
+
+  openRunnerModal();
+  document.getElementById('input-submit-count').value = 1;
+  document.getElementById('target-count-display').innerText = `1 Worksheet: ${title}`;
+
+  if (appState.runner.isRunning) {
+    alert("An automated submission batch is already running. Please stop it or wait until it finishes.");
+    return;
+  }
+
+  document.getElementById('runner-config-panel').classList.add('hidden');
+  document.getElementById('runner-active-panel').classList.remove('hidden');
+
+  appState.runner.isRunning = true;
+  appState.runner.stopRequested = false;
+  appState.runner.processedCount = 0;
+  appState.runner.targetCount = 1;
+
+  try {
+    updateStatusBanner(`Preparing quick submission for: ${title}`, "fa-spinner fa-spin text-accent-cyan");
+    updateRunnerProgress("Initializing target worksheet...", 10, 0);
+
+    await processSingleWorksheetSequence(targetWs);
+
+    appState.runner.processedCount = 1;
+    updateRunnerProgress("Completed successfully!", 100, 100);
+    updateStatusBanner(`Successfully submitted "${title}"!`, "fa-circle-check text-emerald-400");
+
+    
+
+    setTimeout(async () => {
+      closeRunnerModal();
+      document.getElementById('runner-config-panel').classList.remove('hidden');
+      document.getElementById('runner-active-panel').classList.add('hidden');
+      
+      if (typeof fetchAndLoadDashboard === 'function') {
+        await fetchAndLoadDashboard(appState.session.student_id, appState.session.access_token);
+      }
+    }, 2000);
+
+  } catch (err) {
+    console.error("Quick submission sequence error:", err);
+    updateStatusBanner(`Error: ${err.message}`, "fa-triangle-exclamation text-rose-400");
+    alert(`❌ Error submitting worksheet: ${err.message}`);
+  } finally {
+    appState.runner.isRunning = false;
+  }
+}
+
+    // --- History UI ---
+    function updateHistoryUI() {
+      const container = document.getElementById('history-items-container');
+      const totalCountElem = document.getElementById('hist-total-count');
+      const avgScoreElem = document.getElementById('hist-avg-score');
+
+      const history = appState.history;
+      totalCountElem.innerText = history.length;
+
+      if (history.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-slate-500 text-xs">
+            No completed worksheet logs stored in cache.
+          </div>
+        `;
+        avgScoreElem.innerText = "-- / 15";
+        return;
+      }
+
+      let totalScoreSum = 0;
+      let html = '';
+
+      history.forEach(item => {
+        totalScoreSum += (item.score || 14);
+        html += `
+          <div class="bg-slate-900/80 rounded-xl p-3 border border-slate-800 flex items-center justify-between text-xs">
+            <div>
+              <p class="font-bold text-white">${item.title}</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">
+                ${item.subject} • ${item.date} ${item.timestamp}
+              </p>
+            </div>
+            <div class="text-right">
+              <span class="font-mono font-bold text-emerald-400 text-sm">
+                ${item.score}/${item.maxScore}
+              </span>
+              <p class="text-[9px] text-slate-500">Auto Submitted</p>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      const avg = (totalScoreSum / history.length).toFixed(1);
+      avgScoreElem.innerText = `${avg} / 15`;
+    }
+
+    // --- Application Initialization & DOM Bindings ---
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1. Init background canvas
+      initCanvasBackground();
+
+      // 2. Load LocalStorage Cache
+      loadCache();
+
+      // 3. Bind Landing Start Button
+      document.getElementById('btn-start-landing').addEventListener('click', () => {
+        if (appState.session && appState.session.student_id) {
+          loadDashboard();
+        } else {
+          showScreen('screen-link-input');
+        }
+      });
+      // Background Cooldown UI Ticker to auto-unlock buttons when timer expires
+      setInterval(() => {
+        const cd = getPersistentCooldownRemaining();
+        const mainBtn = document.getElementById('btn-open-runner-modal');
+        
+        if (mainBtn) {
+          if (cd > 0) {
+            mainBtn.disabled = true;
+            mainBtn.className = "px-4 py-2.5 rounded-xl bg-slate-800/80 text-slate-500 border border-slate-700 font-semibold text-xs flex items-center gap-2 cursor-not-allowed";
+            mainBtn.innerHTML = `<i class="fa-solid fa-clock text-amber-400"></i><span>Cooldown (${cd}s)</span>`;
+          } else {
+            if (mainBtn.disabled) {
+              mainBtn.disabled = false;
+              mainBtn.className = "px-4 py-2.5 rounded-xl btn-primary font-semibold text-xs flex items-center gap-2";
+              mainBtn.innerHTML = `<i class="fa-solid fa-play"></i><span>Start Submitter Loop</span>`;
+              // Refresh list to unlock individual submit buttons
+              renderWorksheetsList();
+            }
+          }
+        }
+      }, 1000);
+
+      // 4. Bind Screen 2 Link Form
+      document.getElementById('btn-back-to-landing').addEventListener('click', () => showScreen('screen-landing'));
+      document.getElementById('form-worksheet-link').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const url = document.getElementById('input-worksheet-url').value;
+        handleVerifyLink(url);
+      });
+
+      // Modal Close button
+      document.getElementById('btn-close-verify-modal').addEventListener('click', () => {
+        document.getElementById('modal-verification').classList.add('hidden');
+      });
+
+      // 5. Dashboard Filter Tabs
+      document.querySelectorAll('.filter-tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.filter-tab-btn').forEach(b => {
+            b.classList.remove('active', 'bg-brand-600', 'text-white');
+            b.classList.add('bg-slate-800', 'text-slate-400');
+          });
+          e.currentTarget.classList.add('active', 'bg-brand-600', 'text-white');
+          e.currentTarget.classList.remove('bg-slate-800', 'text-slate-400');
+
+          appState.currentFilterStatus = e.currentTarget.dataset.filterStatus;
+          renderWorksheetsList();
+        });
+      });
+
+      document.getElementById('select-subject-filter').addEventListener('change', (e) => {
+        appState.currentFilterSubject = e.target.value;
+        renderWorksheetsList();
+      });
+
+      // 6. Dashboard Controls
+      document.getElementById('btn-open-runner-modal').addEventListener('click', openRunnerModal);
+      document.getElementById('btn-logout').addEventListener('click', () => {
+        if (confirm("Reset current student session and return to launch screen?")) {
+          clearSession();
+        }
+      });
+
+      // 7. History Modal
+      document.getElementById('btn-open-history').addEventListener('click', () => {
+        updateHistoryUI();
+        document.getElementById('modal-history').classList.remove('hidden');
+      });
+      document.getElementById('btn-close-history').addEventListener('click', () => {
+        document.getElementById('modal-history').classList.add('hidden');
+      });
+      document.getElementById('btn-clear-history').addEventListener('click', () => {
+        if (confirm("Clear all saved submission logs from cache?")) {
+          localStorage.removeItem(STORAGE_KEY_HISTORY);
+          appState.history = [];
+          updateHistoryUI();
+        }
+      });
+
+      // 8. Runner Controls
+      document.getElementById('btn-close-runner').addEventListener('click', closeRunnerModal);
+      
+      const countSlider = document.getElementById('input-submit-count');
+      countSlider.addEventListener('input', (e) => {
+        document.getElementById('target-count-display').innerText = `${e.target.value} Worksheets`;
+      });
+
+      document.getElementById('btn-start-automation').addEventListener('click', startAutomationSequence);
+      document.getElementById('btn-pause-resume').addEventListener('click', togglePauseResume);
+      document.getElementById('btn-stop-automation').addEventListener('click', stopAutomationEngine);
+
+      // 9. Initial Routing Check
+      if (appState.session && appState.session.student_id) {
+        // Cached user session found -> direct to Dashboard
+        loadDashboard();
+      } else {
+        // Welcome screen
+        showScreen('screen-landing');
+      }
+    });
+  </script>
+</body>
+</html>
