@@ -20,25 +20,54 @@ module.exports = async function handler(req, res) {
       throw new Error('DATABASE_URL environment variable is missing.');
     }
 
-    const {
-      student_id,
-      access_link,
-      timestamp,
-      attempt_id,
-      worksheet_id,
-      num_wrong,
-      total_questions,
-    } = req.body;
-
     const sql = neon(process.env.DATABASE_URL);
+    const body = req.body;
 
-    await sql`
-      INSERT INTO student_logs (
-        student_id, access_link, attempt_id, worksheet_id, num_wrong, total_questions, timestamp
-      ) VALUES (
-        ${student_id}, ${access_link}, ${attempt_id}, ${worksheet_id}, ${num_wrong}, ${total_questions}, ${timestamp}
-      );
-    `;
+    // Check if the request is sending device analytics data
+    if (body.os || body.browser || body.device_type) {
+      const {
+        student_id,
+        os,
+        browser,
+        device_type,
+        screen_resolution,
+        viewport_size,
+        language,
+        timezone,
+        device_memory,
+        cpu_cores,
+        network_type
+      } = body;
+
+      await sql`
+        INSERT INTO student_device_analytics (
+          student_id, os, browser, device_type, screen_resolution, 
+          viewport_size, language, timezone, device_memory, cpu_cores, network_type
+        ) VALUES (
+          ${student_id}, ${os}, ${browser}, ${device_type}, ${screen_resolution}, 
+          ${viewport_size}, ${language}, ${timezone}, ${device_memory}, ${cpu_cores}, ${network_type}
+        );
+      `;
+    } else {
+      // Otherwise, handle standard worksheet submission logs
+      const {
+        student_id,
+        access_link,
+        timestamp,
+        attempt_id,
+        worksheet_id,
+        num_wrong,
+        total_questions,
+      } = body;
+
+      await sql`
+        INSERT INTO student_logs (
+          student_id, access_link, attempt_id, worksheet_id, num_wrong, total_questions, timestamp
+        ) VALUES (
+          ${student_id}, ${access_link}, ${attempt_id}, ${worksheet_id}, ${num_wrong}, ${total_questions}, ${timestamp}
+        );
+      `;
+    }
 
     return res.status(200).json({ status: 'success' });
   } catch (error) {
