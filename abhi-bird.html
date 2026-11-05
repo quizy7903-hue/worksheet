@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday Flappy Bird!</title>
+    <!-- Tailwind CSS for sleek UI overlay -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+        
+        * {
+            font-family: 'Fredoka', cursive, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #feada6 100%);
+            overflow: hidden;
+        }
+
+        /* Custom Scrollbar for Leaderboard */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff477e;
+            border-radius: 10px;
+        }
+
+        /* Soft Glow effects */
+        .glow-text {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 105, 180, 0.6);
+        }
+
+        /* Glassmorphism card styles */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen m-0 p-0 overflow-hidden select-none bg-sky-200">
+
+    <!-- Game Container Wrapper - Full Viewport Layout (Border Removed) -->
+    <div class="relative w-full h-full overflow-hidden flex flex-col justify-between items-center">
+        
+        <!-- HTML Canvas Layer -->
+        <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-0 block cursor-pointer"></canvas>
+
+        <!-- Top Header Overlay HUD -->
+        <div class="relative z-10 w-full max-w-4xl p-4 flex justify-between items-center pointer-events-none">
+            <!-- Current Live Score -->
+            <div class="bg-white/90 backdrop-blur-md px-5 py-2 rounded-full shadow-lg border border-pink-300 text-pink-600 font-bold text-2xl flex items-center gap-2">
+                <span>🎈</span> <span id="scoreDisplay">0</span>
+            </div>
+            <!-- Settings / Custom Asset Modal Button -->
+            <button id="settingsBtn" class="">
+                
+            </button>
+        </div>
+
+        <!-- UI Screen Overlay: Start Screen -->
+        <div id="startScreen" class="absolute inset-0 z-20 flex flex-col items-center justify-between p-6 bg-black/20 backdrop-blur-[2px] transition-opacity">
+            <div class="text-center mt-10">
+                <h1 class="text-5xl md:text-6xl font-extrabold text-white glow-text tracking-wide drop-shadow-md">HAPPY BIRTHDAY!</h1>
+                <p class="text-pink-100 font-semibold text-base mt-2 drop-shadow">Give Birthday Bumps to Abinanth!</p>
+            </div>
+
+            <div class="flex flex-col items-center gap-4 my-auto">
+                <button id="startBtn" class="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold text-3xl px-12 py-5 rounded-full shadow-2xl transform transition hover:scale-105 active:scale-95 border-2 border-white/50 tracking-wider">
+                    TAP TO PLAY 🎂
+                </button>
+                <p class="text-sm text-white/90 font-medium">Press <kbd class="px-2 py-0.5 bg-white/20 rounded border border-white/40">Space</kbd> or Tap Screen</p>
+            </div>
+
+            <!-- Top Score Preview -->
+            <div class="w-full max-w-md glass-panel rounded-2xl p-4 flex justify-around items-center text-center shadow-lg mb-4">
+                <div>
+                    <span class="text-xs text-gray-500 font-bold block uppercase">High Score</span>
+                    <span id="bestScoreStart" class="text-2xl font-bold text-pink-600">0</span>
+                </div>
+                <div class="h-8 w-px bg-pink-200"></div>
+                <div>
+                    <span class="text-xs text-gray-500 font-bold block uppercase">Custom Bird</span>
+                    <span id="birdStatus" class="text-xs font-bold text-emerald-600">Loaded / Fallback</span>
+                </div>
+            </div>
+        </div>
+<div id="settingsModal" class="absolute inset-0 z-30 hidden flex-col items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div class="w-full max-w-lg glass-panel rounded-3xl p-5 flex flex-col shadow-2xl border-2 border-white max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4 border-b border-pink-200 pb-2">
+                    <h2 class="text-lg font-bold text-pink-600 flex items-center gap-2">🎨 Custom Images & Sounds</h2>
+                    <button id="closeSettingsBtn" class="text-gray-400 hover:text-gray-600 text-xl font-bold px-2">&times;</button>
+                </div>
+
+                <p class="text-xs text-gray-600 mb-3">Place these files in the same folder on Vercel for auto-loading, or select files below:</p>
+
+                <!-- Custom Images Section -->
+                <div class="space-y-3 mb-4 bg-white/50 p-3 rounded-2xl border border-pink-100">
+                    <h3 class="text-xs font-bold text-pink-700 uppercase">1. Custom Images</h3>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Bird Image (<code class="text-pink-600 font-mono">bird.png</code>)</label>
+                        <input type="file" id="birdUpload" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Background Image (<code class="text-pink-600 font-mono">background.png</code>)</label>
+                        <input type="file" id="bgUpload" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Custom Audio Section -->
+                <div class="space-y-3 mb-4 bg-white/50 p-3 rounded-2xl border border-pink-100">
+                    <h3 class="text-xs font-bold text-pink-700 uppercase">2. Custom Sound Effects</h3>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Flap Sound (<code class="text-pink-600 font-mono">flap.mp3 / .wav</code>)</label>
+                        <input type="file" id="flapSoundUpload" accept="audio/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-sky-100 file:text-sky-700 hover:file:bg-sky-200 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Score Sound (<code class="text-pink-600 font-mono">score.mp3 / .wav</code>)</label>
+                        <input type="file" id="scoreSoundUpload" accept="audio/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-700 hover:file:bg-emerald-200 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Game Over Sound (<code class="text-pink-600 font-mono">gameover.mp3 / .wav</code>)</label>
+                        <input type="file" id="hitSoundUpload" accept="audio/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-rose-100 file:text-rose-700 hover:file:bg-rose-200 cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <div class="flex justify-between items-center pt-2 border-t border-pink-100">
+                    <button id="resetAssetsBtn" class="text-xs text-red-500 hover:underline font-semibold">Reset All Assets</button>
+                    <button id="saveSettingsBtn" class="bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold px-5 py-2 rounded-xl shadow-md">Done</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+        <!-- UI Screen Overlay: Game Over Screen -->
+        <div id="gameOverScreen" class="absolute inset-0 z-20 hidden flex-col items-center justify-center p-6 bg-pink-900/40 backdrop-blur-md">
+            <div class="w-full max-w-md glass-panel rounded-3xl p-6 flex flex-col items-center shadow-2xl text-center border-4 border-pink-200">
+                <h2 class="text-4xl font-extrabold text-pink-600 mb-1">GAME OVER</h2>
+                <p id="birthdayWish" class="text-sm text-pink-500 font-semibold mb-4">🎉 Happy Birthday Abinanth! 🍰</p>
+
+                <div class="w-full bg-pink-50/80 rounded-2xl p-4 mb-4 border border-pink-200 flex justify-around">
+                    <div>
+                        <div class="text-xs text-gray-500 font-bold uppercase">Score</div>
+                        <div id="finalScore" class="text-3xl font-extrabold text-pink-600">0</div>
+                    </div>
+                    <div class="h-10 w-px bg-pink-200"></div>
+                    <div>
+                        <div class="text-xs text-gray-500 font-bold uppercase">Best Score</div>
+                        <div id="bestScore" class="text-3xl font-extrabold text-purple-600">0</div>
+                    </div>
+                </div>
+
+                <!-- High Score Entry Form (Only visible if qualifying score) -->
+                <div id="highScoreEntry" class="w-full mb-4">
+                    <label class="block text-xs font-bold text-pink-700 mb-1">NEW HIGH SCORE! ENTER NAME:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="playerNameInput" maxlength="12" placeholder="Stationary" 
+                               class="w-full px-3 py-2 text-center text-sm font-bold rounded-xl border-2 border-pink-300 focus:outline-none focus:border-pink-500 text-gray-700">
+                        <button id="saveScoreBtn" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 rounded-xl shadow-md transition">Save</button>
+                    </div>
+                </div>
+
+                <!-- Leaderboard Mini List -->
+                <div class="w-full bg-white/60 rounded-xl p-3 mb-4 max-h-36 overflow-y-auto">
+                    <h3 class="text-xs font-bold text-gray-600 uppercase mb-2 flex items-center justify-center gap-1">🏆 Leaderboard</h3>
+                    <div id="leaderboardList" class="text-xs text-gray-700 space-y-1">
+                        <!-- Dynamic Leaderboard Items -->
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 w-full">
+                    <button id="restartBtn" class="flex-1 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-bold py-3.5 rounded-2xl shadow-lg transition transform active:scale-95 text-lg">
+                        PLAY AGAIN 🔄
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings & Asset Customization Modal -->
+        
+
+    <!-- JavaScript Game Logic -->
+    <script>
+        /**
+         * HAPPY BIRTHDAY FLAPPY BIRD - COMPLETE GAME LOGIC
+         * Vanilla JS, Full Screen Canvas API, Custom Sound Effects, LocalStorage Leaderboard
+         */
+
+        // Canvas Setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Element References
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const settingsModal = document.getElementById('settingsModal');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        const resetAssetsBtn = document.getElementById('resetAssetsBtn');
+        
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const finalScore = document.getElementById('finalScore');
+        const bestScore = document.getElementById('bestScore');
+        const bestScoreStart = document.getElementById('bestScoreStart');
+        const birdStatus = document.getElementById('birdStatus');
+        
+        const highScoreEntry = document.getElementById('highScoreEntry');
+        const playerNameInput = document.getElementById('playerNameInput');
+        const saveScoreBtn = document.getElementById('saveScoreBtn');
+        const leaderboardList = document.getElementById('leaderboardList');
+        
+        const birdUpload = document.getElementById('birdUpload');
+        const bgUpload = document.getElementById('bgUpload');
+        const flapSoundUpload = document.getElementById('flapSoundUpload');
+        const scoreSoundUpload = document.getElementById('scoreSoundUpload');
+        const hitSoundUpload = document.getElementById('hitSoundUpload');
+
+        // Game State Variables
+        let state = {
+            current: 'START', // 'START', 'PLAYING', 'GAMEOVER'
+            score: 0,
+            highScore: parseInt(localStorage.getItem('hbd_flappy_highscore')) || 0,
+            frames: 0
+        };
+
+        // Resize Canvas to fit container bounds responsively
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Audio Manager: Supports Custom Audio Files with Web Audio API Fallback
+        class SoundEffects {
+            constructor() {
+                this.audioCtx = null;
+                this.flapAudio = new Audio();
+                this.scoreAudio = new Audio();
+                this.hitAudio = new Audio();
+
+                this.hasCustomFlap = false;
+                this.hasCustomScore = false;
+                this.hasCustomHit = false;
+            }
+
+            init() {
+                if (!this.audioCtx) {
+                    this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+
+            loadDefaults() {
+                // Try loading default audio files from folder (Vercel hostable)
+                this.flapAudio.src = 'flap.mp3';
+                this.flapAudio.oncanplaythrough = () => { this.hasCustomFlap = true; };
+                this.flapAudio.onerror = () => { 
+                    this.flapAudio.src = 'flap.wav';
+                    this.flapAudio.oncanplaythrough = () => { this.hasCustomFlap = true; };
+                    this.flapAudio.onerror = () => { this.hasCustomFlap = false; };
+                };
+
+                this.scoreAudio.src = 'score.mp3';
+                this.scoreAudio.oncanplaythrough = () => { this.hasCustomScore = true; };
+                this.scoreAudio.onerror = () => {
+                    this.scoreAudio.src = 'score.wav';
+                    this.scoreAudio.oncanplaythrough = () => { this.hasCustomScore = true; };
+                    this.scoreAudio.onerror = () => { this.hasCustomScore = false; };
+                };
+
+                this.hitAudio.src = 'gameover.mp3';
+                this.hitAudio.oncanplaythrough = () => { this.hasCustomHit = true; };
+                this.hitAudio.onerror = () => {
+                    this.hitAudio.src = 'gameover.wav';
+                    this.hitAudio.oncanplaythrough = () => { this.hasCustomHit = true; };
+                    this.hitAudio.onerror = () => { this.hasCustomHit = false; };
+                };
+            }
+
+            playFlap() {
+                if (this.hasCustomFlap) {
+                    this.flapAudio.currentTime = 0;
+                    this.flapAudio.play().catch(() => this.synthFlap());
+                } else {
+                    this.synthFlap();
+                }
+            }
+
+            playScore() {
+                if (this.hasCustomScore) {
+                    this.scoreAudio.currentTime = 0;
+                    this.scoreAudio.play().catch(() => this.synthScore());
+                } else {
+                    this.synthScore();
+                }
+            }
+
+            playHit() {
+                if (this.hasCustomHit) {
+                    this.hitAudio.currentTime = 0;
+                    this.hitAudio.play().catch(() => this.synthHit());
+                } else {
+                    this.synthHit();
+                }
+            }
+
+            // Built-in Synthesizer Fallbacks
+            synthFlap() {
+                if (!this.audioCtx) return;
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, this.audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.1);
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+                osc.start();
+                osc.stop(this.audioCtx.currentTime + 0.1);
+            }
+
+            synthScore() {
+                if (!this.audioCtx) return;
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, this.audioCtx.currentTime);
+                osc.frequency.setValueAtTime(659.25, this.audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.2, this.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+                osc.start();
+                osc.stop(this.audioCtx.currentTime + 0.25);
+            }
+
+            synthHit() {
+                if (!this.audioCtx) return;
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(40, this.audioCtx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.4, this.audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+                osc.start();
+                osc.stop(this.audioCtx.currentTime + 0.2);
+            }
+        }
+
+        const sfx = new SoundEffects();
+        sfx.loadDefaults();
+
+        // Dynamic Audio Upload Listeners
+        flapSoundUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                sfx.flapAudio.src = URL.createObjectURL(file);
+                sfx.hasCustomFlap = true;
+            }
+        });
+
+        scoreSoundUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                sfx.scoreAudio.src = URL.createObjectURL(file);
+                sfx.hasCustomScore = true;
+            }
+        });
+
+        hitSoundUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                sfx.hitAudio.src = URL.createObjectURL(file);
+                sfx.hasCustomHit = true;
+            }
+        });
+
+        // Image Asset Management (Supports local file auto-load & dynamic uploads)
+        const assets = {
+            birdImg: new Image(),
+            bgImg: new Image(),
+            birdLoaded: false,
+            bgLoaded: false
+        };
+
+        function loadDefaultAssets() {
+            assets.birdImg.src = 'bird.png';
+            assets.birdImg.onload = () => {
+                assets.birdLoaded = true;
+                birdStatus.innerText = 'Custom bird.png Loaded';
+                birdStatus.className = 'text-xs font-bold text-emerald-600';
+            };
+            assets.birdImg.onerror = () => {
+                assets.birdLoaded = false;
+                birdStatus.innerText = 'Default Canvas Bird';
+                birdStatus.className = 'text-xs font-bold text-pink-600';
+            };
+
+            assets.bgImg.src = 'background.png';
+            assets.bgImg.onload = () => { assets.bgLoaded = true; };
+            assets.bgImg.onerror = () => { assets.bgLoaded = false; };
+        }
+        loadDefaultAssets();
+
+        birdUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    assets.birdImg.src = event.target.result;
+                    assets.birdLoaded = true;
+                    birdStatus.innerText = 'Uploaded Custom Bird';
+                    birdStatus.className = 'text-xs font-bold text-emerald-600';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        bgUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    assets.bgImg.src = event.target.result;
+                    assets.bgLoaded = true;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        resetAssetsBtn.addEventListener('click', () => {
+            loadDefaultAssets();
+            sfx.loadDefaults();
+            birdUpload.value = '';
+            bgUpload.value = '';
+            flapSoundUpload.value = '';
+            scoreSoundUpload.value = '';
+            hitSoundUpload.value = '';
+        });
+
+        // Background Particles (Confetti & Floating Balloons)
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + Math.random() * 50;
+                this.size = Math.random() * 8 + 4;
+                this.speedY = Math.random() * 1.5 + 0.5;
+                this.speedX = Math.sin(Math.random() * Math.PI) * 0.8;
+                this.color = ['#ff477e', '#ffaa00', '#06d6a0', '#118ab2', '#ffd166', '#b5179e'][Math.floor(Math.random() * 6)];
+                this.isBalloon = Math.random() > 0.6;
+                this.oscillation = Math.random() * 0.05;
+            }
+
+            update() {
+                this.y -= this.speedY;
+                this.x += Math.sin(state.frames * 0.05 + this.oscillation) * 0.5;
+                if (this.y < -20) this.reset();
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                if (this.isBalloon) {
+                    ctx.beginPath();
+                    ctx.ellipse(this.x, this.y, this.size, this.size * 1.2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, this.y + this.size * 1.2);
+                    ctx.lineTo(this.x + Math.sin(state.frames * 0.1) * 3, this.y + this.size * 2);
+                    ctx.stroke();
+                } else {
+                    ctx.fillRect(this.x, this.y, this.size, this.size * 0.6);
+                }
+            }
+        }
+
+        const particles = Array.from({ length: 40 }, () => new Particle());
+
+        // Bird Object & Physics
+        const bird = {
+            x: 100,
+            y: 250,
+            w: 42,
+            h: 42,
+            gravity: 0.26,
+            jump: 4.8,
+            velocity: 0,
+            rotation: 0,
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                this.rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, this.velocity * 0.08));
+                ctx.rotate(this.rotation);
+
+                if (assets.birdLoaded) {
+                    ctx.drawImage(assets.birdImg, -this.w / 2, -this.h / 2, this.w, this.h);
+                } else {
+                    ctx.fillStyle = '#ffca28';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#f57f17';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(7, -4, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath();
+                    ctx.arc(9, -4, 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#ff7043';
+                    ctx.beginPath();
+                    ctx.moveTo(12, 0);
+                    ctx.lineTo(22, 4);
+                    ctx.lineTo(12, 8);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#f57c00';
+                    ctx.beginPath();
+                    ctx.ellipse(-7, 4, 9, 6, Math.PI / 4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Birthday Party Hat
+                    ctx.fillStyle = '#e91e63';
+                    ctx.beginPath();
+                    ctx.moveTo(-5, -16);
+                    ctx.lineTo(7, -16);
+                    ctx.lineTo(1, -28);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.fillStyle = '#00e676';
+                    ctx.beginPath();
+                    ctx.arc(1, -29, 3.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            },
+
+            flap() {
+                this.velocity = -this.jump;
+                sfx.playFlap();
+            },
+
+            update() {
+                if (state.current === 'START') {
+                    this.y = (canvas.height / 2) + Math.sin(state.frames * 0.06) * 8;
+                    this.velocity = 0;
+                } else if (state.current === 'PLAYING') {
+                    this.velocity += this.gravity;
+                    this.y += this.velocity;
+
+                    if (this.y + this.h / 2 >= canvas.height - 40) {
+                        this.y = canvas.height - 40 - this.h / 2;
+                        gameOver();
+                    }
+
+                    if (this.y - this.h / 2 <= 0) {
+                        this.y = this.h / 2;
+                        this.velocity = 0;
+                    }
+                }
+            },
+
+            reset() {
+                this.x = Math.min(120, canvas.width * 0.2);
+                this.y = canvas.height / 2;
+                this.velocity = 0;
+                this.rotation = 0;
+            }
+        };
+
+        // Pipe Obstacles Class
+        class PipeHandler {
+            constructor() {
+                this.pipes = [];
+                this.dx = 2.5;
+                this.gap = 145;
+                this.spawnRate = 95;
+            }
+
+            draw() {
+                this.pipes.forEach(p => {
+                    const pipeGradient = ctx.createLinearGradient(p.x, 0, p.x + p.w, 0);
+                    pipeGradient.addColorStop(0, '#70e000');
+                    pipeGradient.addColorStop(0.5, '#38b000');
+                    pipeGradient.addColorStop(1, '#007200');
+
+                    ctx.fillStyle = pipeGradient;
+                    ctx.strokeStyle = '#004b23';
+                    ctx.lineWidth = 2;
+
+                    // Top Pipe Body
+                    ctx.fillRect(p.x, 0, p.w, p.top);
+                    ctx.strokeRect(p.x, 0, p.w, p.top);
+
+                    // Top Pipe Cap
+                    ctx.fillStyle = '#ff477e';
+                    ctx.fillRect(p.x - 4, p.top - 20, p.w + 8, 20);
+                    ctx.strokeRect(p.x - 4, p.top - 20, p.w + 8, 20);
+
+                    // Bottom Pipe Body
+                    ctx.fillStyle = pipeGradient;
+                    ctx.fillRect(p.x, p.bottom, p.w, canvas.height - p.bottom);
+                    ctx.strokeRect(p.x, p.bottom, p.w, canvas.height - p.bottom);
+
+                    // Bottom Pipe Cap
+                    ctx.fillStyle = '#ff477e';
+                    ctx.fillRect(p.x - 4, p.bottom, p.w + 8, 20);
+                    ctx.strokeRect(p.x - 4, p.bottom, p.w + 8, 20);
+
+                    // Stripes
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                    for (let y = 10; y < p.top - 25; y += 35) {
+                        ctx.fillRect(p.x + 4, y, p.w - 8, 7);
+                    }
+                    for (let y = p.bottom + 35; y < canvas.height - 50; y += 35) {
+                        ctx.fillRect(p.x + 4, y, p.w - 8, 7);
+                    }
+                });
+            }
+
+            update() {
+                if (state.current !== 'PLAYING') return;
+
+                if (state.frames % this.spawnRate === 0) {
+                    const minHeight = 70;
+                    const maxHeight = canvas.height - this.gap - 120;
+                    const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1) + minHeight);
+
+                    this.pipes.push({
+                        x: canvas.width,
+                        w: 60,
+                        top: topHeight,
+                        bottom: topHeight + this.gap,
+                        passed: false
+                    });
+                }
+
+                for (let i = 0; i < this.pipes.length; i++) {
+                    let p = this.pipes[i];
+                    p.x -= this.dx;
+
+                    if (!p.passed && bird.x > p.x + p.w) {
+                        p.passed = true;
+                        state.score++;
+                        scoreDisplay.innerText = state.score;
+                        sfx.playScore();
+                    }
+
+                    const birdRadius = bird.w / 2 - 4;
+                    if (
+                        bird.x + birdRadius > p.x && 
+                        bird.x - birdRadius < p.x + p.w && 
+                        (bird.y - birdRadius < p.top || bird.y + birdRadius > p.bottom)
+                    ) {
+                        sfx.playHit();
+                        gameOver();
+                    }
+
+                    if (p.x + p.w < 0) {
+                        this.pipes.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+
+            reset() {
+                this.pipes = [];
+            }
+        }
+
+        const pipeHandler = new PipeHandler();
+
+        function drawGround() {
+            const groundHeight = 40;
+            ctx.fillStyle = '#88d49e';
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, groundHeight);
+
+            ctx.fillStyle = '#2e8b57';
+            ctx.fillRect(0, canvas.height - groundHeight, canvas.width, 6);
+
+            ctx.strokeStyle = '#1b4332';
+            ctx.lineWidth = 2;
+            const offset = (state.frames * 2) % 15;
+            for (let x = -offset; x < canvas.width; x += 15) {
+                ctx.beginPath();
+                ctx.moveTo(x, canvas.height - groundHeight + 6);
+                ctx.lineTo(x + 5, canvas.height - groundHeight + 14);
+                ctx.stroke();
+            }
+        }
+
+        function drawBackground() {
+            if (assets.bgLoaded) {
+                ctx.drawImage(assets.bgImg, 0, 0, canvas.width, canvas.height);
+            } else {
+                const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                bgGradient.addColorStop(0, '#bde0fe');
+                bgGradient.addColorStop(0.7, '#ffc8dd');
+                bgGradient.addColorStop(1, '#ffafcc');
+                ctx.fillStyle = bgGradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const bannerColors = ['#ff477e', '#ffb703', '#8ecae6', '#06d6a0', '#b5179e'];
+                const bannerWidth = 40;
+                for (let x = 0; x < canvas.width; x += bannerWidth) {
+                    const colorIndex = Math.floor((x / bannerWidth) % bannerColors.length);
+                    ctx.fillStyle = bannerColors[colorIndex];
+                    ctx.beginPath();
+                    ctx.moveTo(x, 0);
+                    ctx.lineTo(x + bannerWidth / 2, 30);
+                    ctx.lineTo(x + bannerWidth, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+        }
+
+        function loop() {
+            state.frames++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBackground();
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            pipeHandler.update();
+            pipeHandler.draw();
+
+            drawGround();
+
+            bird.update();
+            bird.draw();
+
+            requestAnimationFrame(loop);
+        }
+
+        const LEADERBOARD_KEY = 'hbd_flappy_leaderboard';
+
+        async function fetchLeaderboardFromNeon() {
+            try {
+                const res = await fetch('/api/leaderboard');
+                if (!res.ok) throw new Error('Failed to fetch leaderboard');
+                return await res.json(); // Array of { name, score }
+            } catch (err) {
+                console.error('Neon DB fetch error:', err);
+                return [];
+            }
+        }
+
+        async function saveScoreToNeon(playerName, playerScore) {
+            try {
+                const res = await fetch('/api/leaderboard', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: playerName, score: playerScore })
+                });
+                if (!res.ok) throw new Error('Failed to save score');
+                renderLeaderboard(); // Refresh UI after saving
+            } catch (err) {
+                console.error('Neon DB save error:', err);
+            }
+        }
+
+        async function renderLeaderboard() {
+            leaderboardList.innerHTML = '<div class="text-center py-2 text-gray-500">Loading scores...</div>';
+            const board = await fetchLeaderboardFromNeon();
+
+            if (board.length === 0) {
+                leaderboardList.innerHTML = '<div class="text-center py-2 text-gray-500">No high scores yet!</div>';
+                return;
+            }
+
+            leaderboardList.innerHTML = board.map((entry, index) => `
+                <div class="flex justify-between items-center py-1 border-b border-pink-100 last:border-0">
+                    <span class="font-bold text-pink-600">${index + 1}. ${escapeHTML(entry.name)}</span>
+                    <span class="font-bold text-gray-800">${entry.score} pts</span>
+                </div>
+            `).join('');
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        function startGame() {
+            sfx.init();
+            state.current = 'PLAYING';
+            state.score = 0;
+            scoreDisplay.innerText = '0';
+            bird.reset();
+            pipeHandler.reset();
+            
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            gameOverScreen.classList.remove('flex');
+        }
+
+        function gameOver() {
+            state.current = 'GAMEOVER';
+            finalScore.innerText = state.score;
+            
+            if (state.score > state.highScore) {
+                state.highScore = state.score;
+                localStorage.setItem('hbd_flappy_highscore', state.highScore);
+            }
+            bestScore.innerText = state.highScore;
+            bestScoreStart.innerText = state.highScore;
+
+            highScoreEntry.classList.remove('hidden');
+
+            renderLeaderboard();
+            gameOverScreen.classList.remove('hidden');
+            gameOverScreen.classList.add('flex');
+        }
+
+        function handleFlapInput(e) {
+            if (e.target.closest('button') || e.target.closest('input') || e.target.closest('#settingsModal')) {
+                return;
+            }
+
+            if (state.current === 'START') {
+                startGame();
+                bird.flap();
+            } else if (state.current === 'PLAYING') {
+                bird.flap();
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleFlapInput(e);
+            }
+        });
+
+        canvas.addEventListener('mousedown', handleFlapInput);
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handleFlapInput(e);
+        }, { passive: false });
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', startGame);
+
+        saveScoreBtn.addEventListener('click', async () => {
+            const name = playerNameInput.value.trim() || 'Birthday Star';
+            saveScoreBtn.disabled = true;
+            saveScoreBtn.innerText = 'Saving...';
+            
+            await saveScoreToNeon(name, state.score);
+            
+            saveScoreBtn.disabled = false;
+            saveScoreBtn.innerText = 'Save';
+            playerNameInput.value = '';
+            highScoreEntry.classList.add('hidden');
+        });
+        settingsBtn.addEventListener('click', () => { settingsModal.classList.remove('hidden'); settingsModal.classList.add('flex'); });
+        closeSettingsBtn.addEventListener('click', () => { settingsModal.classList.add('hidden'); settingsModal.classList.remove('flex'); });
+        saveSettingsBtn.addEventListener('click', () => { settingsModal.classList.add('hidden'); settingsModal.classList.remove('flex'); });
+
+        bestScoreStart.innerText = state.highScore;
+
+        window.onload = () => {
+            loop();
+        };
+    </script>
+</body>
+</html>
