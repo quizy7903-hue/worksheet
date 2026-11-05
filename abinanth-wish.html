@@ -252,9 +252,7 @@
       document.getElementById('successSection').style.display = 'block';
 
       // Redirect after 2 seconds (change target URL as needed)
-      setTimeout(() => {
-        window.location.href = 'https://www.worksheet-mocha.vercel.app/abhi-bird.html';
-      }, 2000);
+      
     } else {
       alert('Error: ' + (result.error || 'Could not send wish'));
       submitBtn.disabled = false;
