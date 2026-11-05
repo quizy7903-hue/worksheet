@@ -88,11 +88,8 @@
                     <span class="text-xs text-gray-500 font-bold block uppercase">High Score</span>
                     <span id="bestScoreStart" class="text-2xl font-bold text-pink-600">0</span>
                 </div>
-                <div class="h-8 w-px bg-pink-200"></div>
-                <div>
-                    <span class="text-xs text-gray-500 font-bold block uppercase">Custom Bird</span>
-                    <span id="birdStatus" class="text-xs font-bold text-emerald-600">Loaded / Fallback</span>
-                </div>
+               
+               
             </div>
         </div>
 <div id="settingsModal" class="absolute inset-0 z-30 hidden flex-col items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -218,7 +215,7 @@
         const finalScore = document.getElementById('finalScore');
         const bestScore = document.getElementById('bestScore');
         const bestScoreStart = document.getElementById('bestScoreStart');
-        const birdStatus = document.getElementById('birdStatus');
+        
         
         const highScoreEntry = document.getElementById('highScoreEntry');
         const playerNameInput = document.getElementById('playerNameInput');
@@ -407,13 +404,12 @@
             assets.birdImg.src = 'bird.png';
             assets.birdImg.onload = () => {
                 assets.birdLoaded = true;
-                birdStatus.innerText = 'Custom bird.png Loaded';
-                birdStatus.className = 'text-xs font-bold text-emerald-600';
+                
+                
             };
             assets.birdImg.onerror = () => {
                 assets.birdLoaded = false;
-                birdStatus.innerText = 'Default Canvas Bird';
-                birdStatus.className = 'text-xs font-bold text-pink-600';
+                
             };
 
             assets.bgImg.src = 'background.png';
@@ -429,8 +425,7 @@
                 reader.onload = (event) => {
                     assets.birdImg.src = event.target.result;
                     assets.birdLoaded = true;
-                    birdStatus.innerText = 'Uploaded Custom Bird';
-                    birdStatus.className = 'text-xs font-bold text-emerald-600';
+                    
                 };
                 reader.readAsDataURL(file);
             }
