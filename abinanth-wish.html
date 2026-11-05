@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy Birthday Abinanth!</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              pink: '#FF4D8D',
+              purple: '#7C3AED',
+              dark: '#0B0F19'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0B0F19;
+      color: #F8FAFC;
+      overflow-x: hidden;
+    }
+
+    /* Continuous Bouncing/Floating Face */
+    #floatingFaceContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .bouncing-face {
+      position: absolute;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 77, 141, 0.6);
+      box-shadow: 0 0 25px rgba(255, 77, 141, 0.4);
+      object-fit: cover;
+      animation: spin 8s linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Watermark Background Scrolling Text */
+    .bg-text-container {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      opacity: 0.04;
+      user-select: none;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .scrolling-text {
+      font-weight: 800;
+      font-size: 6rem;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #FFFFFF;
+      animation: scrollText 25s linear infinite;
+    }
+
+    .scrolling-text:nth-child(even) {
+      animation-direction: reverse;
+    }
+
+    @keyframes scrollText {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-6 relative">
+
+  <!-- BACKGROUND: Ambient Scrolling Text -->
+  <div class="bg-text-container">
+    <div class="scrolling-text">HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH •</div>
+    <div class="scrolling-text">HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH •</div>
+    <div class="scrolling-text">HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH •</div>
+    <div class="scrolling-text">HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH • HAPPY BIRTHDAY ABINANTH •</div>
+  </div>
+
+  <!-- BACKGROUND: Bouncing Rotating face.png -->
+  <div id="floatingFaceContainer">
+    <img id="bouncingFace" src="face.png" alt="Abinanth" class="bouncing-face" onerror="this.onerror=null; this.src='https://placehold.co/200x200/FF4D8D/ffffff?text=Abinanth';">
+  </div>
+
+  <!-- MAIN CARD CONTAINER -->
+  <main class="w-full max-w-md relative z-10 bg-slate-900/80 border border-white/10 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl transition-all duration-300">
+    
+    <!-- INITIAL STATE: Wish Form -->
+    <div id="formSection" class="space-y-6">
+      
+      <!-- Intro Info -->
+      <div class="text-center space-y-2">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-pink via-purple-400 to-indigo-400">
+          Happy Birthday Abinanth! 🎉
+        </h1>
+        <p class="text-slate-300 text-xs sm:text-sm leading-relaxed pt-1">
+          Submit what do you think Abinanth will wish when he cuts the cake! This will be used for teasing abinanth in 100 different ways. Kindly don't use any inapproiate words and be honest with your name :)
+        </p>
+      </div>
+
+      <!-- Wish Form -->
+      <form id="wishForm" onsubmit="submitWish(event)" class="space-y-4">
+        <div>
+          <label for="senderName" class="block text-xs font-semibold text-slate-300 mb-1.5">Your Name</label>
+          <input 
+            type="text" 
+            id="senderName" 
+            required 
+            placeholder="Enter your name" 
+            class="w-full px-4 py-3 bg-slate-800/90 border border-white/10 rounded-xl focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/20 text-white placeholder-slate-500 text-sm transition-all"
+          >
+        </div>
+
+        <div>
+          <label for="wishMessage" class="block text-xs font-semibold text-slate-300 mb-1.5">Your Wish for Abinanth</label>
+          <textarea 
+            id="wishMessage" 
+            required 
+            rows="3" 
+            placeholder="Write your birthday wish..." 
+            class="w-full px-4 py-3 bg-slate-800/90 border border-white/10 rounded-xl focus:border-brand-pink focus:outline-none focus:ring-2 focus:ring-brand-pink/20 text-white placeholder-slate-500 text-sm transition-all resize-none"
+          ></textarea>
+        </div>
+
+        <button 
+          type="submit" 
+          id="submitBtn"
+          class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-brand-pink to-brand-purple hover:opacity-90 font-bold text-sm text-white shadow-lg shadow-brand-pink/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+        >
+          <span>Send Birthday Wish</span>
+          <i class="fa-solid fa-paper-plane text-xs"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- SUCCESS STATE: Confirmation & Redirecting -->
+    <div id="successSection" class="hidden text-center py-8 space-y-4">
+      <div class="w-16 h-16 bg-brand-pink/20 border border-brand-pink text-brand-pink rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div class="space-y-1">
+        <h2 class="text-2xl font-bold text-white">Wish Submitted!</h2>
+        <p class="text-slate-400 text-xs sm:text-sm">Thank you for wishing Abinanth!</p>
+      </div>
+      <div class="flex items-center justify-center gap-2 text-xs text-brand-pink font-semibold pt-2">
+        <i class="fa-solid fa-spinner animate-spin"></i>
+        <span>Redirecting now...</span>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // --- 1. BOUNCING FACE ANIMATION LOGIC ---
+    const face = document.getElementById('bouncingFace');
+    let x = Math.random() * (window.innerWidth - 120);
+    let y = Math.random() * (window.innerHeight - 120);
+    let dx = (Math.random() > 0.5 ? 1 : -1) * 2;
+    let dy = (Math.random() > 0.5 ? 1 : -1) * 2;
+
+    function animateFace() {
+      const faceWidth = 110;
+      const faceHeight = 110;
+
+      x += dx;
+      y += dy;
+
+      if (x + faceWidth >= window.innerWidth || x <= 0) {
+        dx = -dx;
+      }
+      if (y + faceHeight >= window.innerHeight || y <= 0) {
+        dy = -dy;
+      }
+
+      face.style.transform = `translate(${x}px, ${y}px)`;
+      requestAnimationFrame(animateFace);
+    }
+
+    // Start face bounce loop
+    animateFace();
+
+    window.addEventListener('resize', () => {
+      x = Math.min(x, window.innerWidth - 120);
+      y = Math.min(y, window.innerHeight - 120);
+    });
+
+    // --- 2. FORM SUBMISSION & NEON DB integration ---
+    async function submitWish(e) {
+  e.preventDefault();
+
+  const nameInput = document.getElementById('senderName');
+  const messageInput = document.getElementById('wishMessage');
+  const submitBtn = document.getElementById('submitBtn');
+
+  const name = nameInput.value.trim();
+  const message = messageInput.value.trim();
+
+  if (!name || !message) return;
+
+  // Show visual loading indicator
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Submitting...";
+
+  try {
+    const response = await fetch('/api/wish', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, message }),
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      // Hide form & show success UI
+      document.getElementById('formSection').style.display = 'none';
+      document.getElementById('successSection').style.display = 'block';
+
+      // Redirect after 2 seconds (change target URL as needed)
+      setTimeout(() => {
+        window.location.href = 'https://www.youtube.com/';
+      }, 2000);
+    } else {
+      alert('Error: ' + (result.error || 'Could not send wish'));
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Send Birthday Wish";
+    }
+  } catch (err) {
+    console.error('Network error:', err);
+    alert('Network error. Please try again.');
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Send Birthday Wish";
+  }
+}
+  </script>
+
+  <!--
+    ====================================================================
+    VERCEL + NEON DB SERVERLESS API INTEGRATION SETUP INSTRUCTIONS
+    ====================================================================
+
+    1. Neon DB SQL Table Creation:
+       Run this SQL query in your Neon DB Console SQL Editor:
+
+       CREATE TABLE wishes (
+           id SERIAL PRIMARY KEY,
+           name VARCHAR(255) NOT NULL,
+           message TEXT NOT NULL,
+           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+       );
+
+    2. Vercel Serverless Function File (/api/wish.js):
+       Place the following code inside a file named `api/wish.js` in your Vercel project root:
+
+       ------------------------------------------------------------------
+       import { sql } from '@neondatabase/serverless';
+
+       export default async function handler(req, res) {
+         if (req.method !== 'POST') {
+           return res.status(405).json({ error: 'Method not allowed' });
+         }
+
+         const { name, message } = req.body;
+
+         if (!name || !message) {
+           return res.status(400).json({ error: 'Name and wish are required.' });
+         }
+
+         try {
+           await sql`
+             INSERT INTO wishes (name, message)
+             VALUES (${name}, ${message});
+           `;
+           return res.status(200).json({ success: true, message: 'Wish saved successfully!' });
+         } catch (error) {
+           console.error('Database Error:', error);
+           return res.status(500).json({ error: 'Failed to save wish to Neon DB.' });
+         }
+       }
+       ------------------------------------------------------------------
+
+    3. Vercel Environment Variables:
+       In Vercel Project Settings -> Environment Variables, add:
+       DATABASE_URL = "postgres://user:password@ep-something.neon.tech/neondb?sslmode=require"
+  -->
+</body>
+</html>
