@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Birthday Wishes Feed</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .wish-card {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans flex flex-col items-center py-10 px-4">
+
+  <!-- Header -->
+  <header class="text-center max-w-xl mb-8">
+    <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">
+      Birthday Wishes 🎉
+    </h1>
+    <p class="text-slate-400 text-sm mt-1">Here is what everyone has sent so far!</p>
+    <div class="mt-4 flex justify-center items-center gap-3">
+      <button id="refresh-btn" onclick="fetchWishes()" class="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-full transition flex items-center gap-2">
+        <svg id="refresh-icon" class="w-3.5 h-3.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        Refresh Feed
+      </button>
+      <span id="status-tag" class="text-xs text-slate-500">Auto-refreshing...</span>
+    </div>
+  </header>
+
+  <!-- Feed Container -->
+  <main class="w-full max-w-xl flex flex-col gap-4" id="wishes-container">
+    <!-- Skeleton Loading State -->
+    <div class="animate-pulse bg-slate-900 border border-slate-800 rounded-xl p-5">
+      <div class="h-4 bg-slate-800 rounded w-1/3 mb-2"></div>
+      <div class="h-3 bg-slate-800 rounded w-2/3"></div>
+    </div>
+  </main>
+
+  <!-- Script -->
+  <script>
+    const API_URL = '/api/wishes'; // Adjust if your serverless route path differs
+
+    async function fetchWishes() {
+      const container = document.getElementById('wishes-container');
+      const refreshIcon = document.getElementById('refresh-icon');
+      
+      refreshIcon.classList.add('animate-spin');
+
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Failed to fetch wishes');
+        
+        const wishes = await res.json();
+
+        if (wishes.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 bg-slate-900/50 border border-slate-800 rounded-xl">
+              <p class="text-slate-400">No wishes received yet. Be the first!</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = wishes.map((wish, index) => {
+          const timeAgo = formatTimeAgo(wish.created_at);
+          return `
+            <div class="wish-card bg-slate-900/90 hover:bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg transition duration-200" style="animation-delay: ${index * 50}ms">
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-amber-300 text-base">${escapeHtml(wish.name)}</span>
+                <span class="text-xs text-slate-500">${timeAgo}</span>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(wish.message)}</p>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = `
+          <div class="text-center py-8 bg-red-950/30 border border-red-900/50 rounded-xl">
+            <p class="text-red-400 text-sm">Could not load wishes. Check your connection or API route.</p>
+          </div>
+        `;
+      } finally {
+        setTimeout(() => refreshIcon.classList.remove('animate-spin'), 300);
+      }
+    }
+
+    // Helper: Prevent XSS
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, match => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[match]));
+    }
+
+    // Helper: Relative time formatting
+    function formatTimeAgo(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const seconds = Math.floor((new Date() - date) / 1000);
+      
+      if (seconds < 60) return 'Just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+
+    // Initial load + auto-refresh poll every 10 seconds
+    fetchWishes();
+    setInterval(fetchWishes, 10000);
+  </script>
+</body>
+</html>
