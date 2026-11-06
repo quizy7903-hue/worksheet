@@ -186,84 +186,107 @@
   <!-- JAVASCRIPT LOGIC -->
   <script>
     // 1. DEVICE ANALYTICS ON WINDOW LOAD (Using fake student ID)
-    window.onload = function () {
-      const studentId = '00000000-0000-0000-0000-000000000001';
+    window.onload = async function () {
+    const studentId = 'student_uuid_12345'; // Or pull dynamically from URL/localStorage
 
-      // Detect Operating System
-      const ua = navigator.userAgent;
-      let os = "Unknown OS";
-      if (/Windows/i.test(ua)) os = "Windows";
-      else if (/Macintosh|Mac OS X/i.test(ua)) os = "macOS";
-      else if (/Android/i.test(ua)) os = "Android";
-      else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
-      else if (/Linux/i.test(ua)) os = "Linux";
+    const ua = navigator.userAgent;
 
-      // Detect Browser
-      let browser = "Unknown Browser";
-      if (/Edg/i.test(ua)) browser = "Microsoft Edge";
-      else if (/Chrome/i.test(ua) && !/Chromium|Edg/i.test(ua)) browser = "Google Chrome";
-      else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
-      else if (/Firefox/i.test(ua)) browser = "Mozilla Firefox";
-      else if (/Trident|MSIE/i.test(ua)) browser = "Internet Explorer";
+    // 1. Operating System
+    let os = "Unknown OS";
+    if (/Windows/i.test(ua)) os = "Windows";
+    else if (/Macintosh|Mac OS X/i.test(ua)) os = "macOS";
+    else if (/Android/i.test(ua)) os = "Android";
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+    else if (/Linux/i.test(ua)) os = "Linux";
 
-      // Detect Device Type
-      let device_type = "Desktop";
-      if (/Mobi|Android/i.test(ua)) device_type = "Mobile";
-      if (/Tablet|iPad/i.test(ua)) device_type = "Tablet";
+    // 2. Browser
+    let browser = "Unknown Browser";
+    if (/Edg/i.test(ua)) browser = "Microsoft Edge";
+    else if (/Chrome/i.test(ua) && !/Chromium|Edg/i.test(ua)) browser = "Google Chrome";
+    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+    else if (/Firefox/i.test(ua)) browser = "Mozilla Firefox";
 
-      // Screen Resolution & Viewport
-      const screen_resolution = `${window.screen.width}x${window.screen.height}`;
-      const viewport_size = `${window.innerWidth}x${window.innerHeight}`;
+    // 3. Device Type & Touch
+    let device_type = "Desktop";
+    if (/Mobi|Android/i.test(ua)) device_type = "Mobile";
+    if (/Tablet|iPad/i.test(ua)) device_type = "Tablet";
+    const max_touch_points = navigator.maxTouchPoints || 0;
 
-      // Language & Timezone
-      const language = navigator.language || navigator.userLanguage || "Unknown";
-      let timezone = "Unknown";
+    // 4. Screen & Viewport
+    const screen_resolution = `${window.screen.width}x${window.screen.height}`;
+    const viewport_size = `${window.innerWidth}x${window.innerHeight}`;
+
+    // 5. Locale & Environment
+    const language = navigator.language || "Unknown";
+    let timezone = "Unknown";
+    try {
+      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (e) {}
+
+    const color_scheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const cookies_enabled = navigator.cookieEnabled;
+    const platform = navigator.platform || "Unknown";
+
+    // 6. Hardware Specs
+    const device_memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : null;
+    const cpu_cores = navigator.hardwareConcurrency || null;
+
+    // 7. Network Info
+    let network_type = "Unknown";
+    let downlink_speed = null;
+    let rtt = null;
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection) {
+      network_type = connection.effectiveType || connection.type || "Unknown";
+      downlink_speed = connection.downlink ? `${connection.downlink} Mbps` : null;
+      rtt = connection.rtt ? `${connection.rtt} ms` : null;
+    }
+
+    // 8. Battery Info (Async API)
+    let battery_level = null;
+    let is_charging = null;
+    if (navigator.getBattery) {
       try {
-        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      } catch (e) {
-        timezone = "Unknown";
-      }
+        const battery = await navigator.getBattery();
+        battery_level = `${Math.round(battery.level * 100)}%`;
+        is_charging = battery.charging;
+      } catch (e) {}
+    }
 
-      // Hardware & Network Info
-      const device_memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : null;
-      const cpu_cores = navigator.hardwareConcurrency || null;
-      
-      let network_type = "Unknown";
-      if (navigator.connection) {
-        network_type = navigator.connection.effectiveType || navigator.connection.type || "Unknown";
-      }
-
-      // Compile payload matching your backend handler
-      const payload = {
-        student_id: studentId,
-        os,
-        browser,
-        device_type,
-        screen_resolution,
-        viewport_size,
-        language,
-        timezone,
-        device_memory,
-        cpu_cores,
-        network_type
-      };
-
-      // Send device analytics to your backend handler route
-      fetch('/api/save-student-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log('Device analytics recorded successfully:', data);
-      })
-      .catch(error => {
-        console.error('Failed to record device analytics:', error);
-      });
+    // Compile payload
+    const payload = {
+      student_id: studentId,
+      os,
+      browser,
+      device_type,
+      screen_resolution,
+      viewport_size,
+      language,
+      timezone,
+      device_memory,
+      cpu_cores,
+      network_type,
+      battery_level,
+      is_charging,
+      downlink_speed,
+      rtt,
+      max_touch_points,
+      color_scheme,
+      cookies_enabled,
+      platform
     };
+
+    // Send to backend
+    fetch('/api/device-analytics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => console.log('Extended device analytics saved:', data))
+    .catch(err => console.error('Analytics error:', err));
+  };
+
 
     // 2. BOUNCING FACE ANIMATION LOGIC
     const face = document.getElementById('bouncingFace');
