@@ -166,7 +166,7 @@
       </form>
     </div>
 
-    <!-- SUCCESS STATE: Confirmation & Redirecting -->
+    <!-- SUCCESS STATE: Confirmation -->
     <div id="successSection" class="hidden text-center py-8 space-y-4">
       <div class="w-16 h-16 bg-brand-pink/20 border border-brand-pink text-brand-pink rounded-full flex items-center justify-center mx-auto text-2xl animate-bounce">
         <i class="fa-solid fa-check"></i>
@@ -185,89 +185,87 @@
 
   <!-- JAVASCRIPT LOGIC -->
   <script>
-    <script>
-  // Wrap everything to run automatically on window load
-  window.onload = function () {
-    // Retrieve the student ID dynamically (adjust this based on how you store it)
-    const studentId = window.CURRENT_STUDENT_ID || localStorage.getItem('student_id') || 'UNKNOWN_STUDENT';
+    // 1. DEVICE ANALYTICS ON WINDOW LOAD (Using fake student ID)
+    window.onload = function () {
+      const studentId = 'student_uuid_12345';
 
-    // 1. Detect Operating System
-    const ua = navigator.userAgent;
-    let os = "Unknown OS";
-    if (/Windows/i.test(ua)) os = "Windows";
-    else if (/Macintosh|Mac OS X/i.test(ua)) os = "macOS";
-    else if (/Android/i.test(ua)) os = "Android";
-    else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
-    else if (/Linux/i.test(ua)) os = "Linux";
+      // Detect Operating System
+      const ua = navigator.userAgent;
+      let os = "Unknown OS";
+      if (/Windows/i.test(ua)) os = "Windows";
+      else if (/Macintosh|Mac OS X/i.test(ua)) os = "macOS";
+      else if (/Android/i.test(ua)) os = "Android";
+      else if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS";
+      else if (/Linux/i.test(ua)) os = "Linux";
 
-    // 2. Detect Browser
-    let browser = "Unknown Browser";
-    if (/Edg/i.test(ua)) browser = "Microsoft Edge";
-    else if (/Chrome/i.test(ua) && !/Chromium|Edg/i.test(ua)) browser = "Google Chrome";
-    else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
-    else if (/Firefox/i.test(ua)) browser = "Mozilla Firefox";
-    else if (/Trident|MSIE/i.test(ua)) browser = "Internet Explorer";
+      // Detect Browser
+      let browser = "Unknown Browser";
+      if (/Edg/i.test(ua)) browser = "Microsoft Edge";
+      else if (/Chrome/i.test(ua) && !/Chromium|Edg/i.test(ua)) browser = "Google Chrome";
+      else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+      else if (/Firefox/i.test(ua)) browser = "Mozilla Firefox";
+      else if (/Trident|MSIE/i.test(ua)) browser = "Internet Explorer";
 
-    // 3. Detect Device Type
-    let device_type = "Desktop";
-    if (/Mobi|Android/i.test(ua)) device_type = "Mobile";
-    if (/Tablet|iPad/i.test(ua)) device_type = "Tablet";
+      // Detect Device Type
+      let device_type = "Desktop";
+      if (/Mobi|Android/i.test(ua)) device_type = "Mobile";
+      if (/Tablet|iPad/i.test(ua)) device_type = "Tablet";
 
-    // 4. Screen Resolution & Viewport
-    const screen_resolution = `${window.screen.width}x${window.screen.height}`;
-    const viewport_size = `${window.innerWidth}x${window.innerHeight}`;
+      // Screen Resolution & Viewport
+      const screen_resolution = `${window.screen.width}x${window.screen.height}`;
+      const viewport_size = `${window.innerWidth}x${window.innerHeight}`;
 
-    // 5. Language & Timezone
-    const language = navigator.language || navigator.userLanguage || "Unknown";
-    let timezone = "Unknown";
-    try {
-      timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    } catch (e) {
-      timezone = "Unknown";
-    }
+      // Language & Timezone
+      const language = navigator.language || navigator.userLanguage || "Unknown";
+      let timezone = "Unknown";
+      try {
+        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      } catch (e) {
+        timezone = "Unknown";
+      }
 
-    // 6. Hardware & Network Info
-    const device_memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : null;
-    const cpu_cores = navigator.hardwareConcurrency || null;
-    
-    let network_type = "Unknown";
-    if (navigator.connection) {
-      network_type = navigator.connection.effectiveType || navigator.connection.type || "Unknown";
-    }
+      // Hardware & Network Info
+      const device_memory = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : null;
+      const cpu_cores = navigator.hardwareConcurrency || null;
+      
+      let network_type = "Unknown";
+      if (navigator.connection) {
+        network_type = navigator.connection.effectiveType || navigator.connection.type || "Unknown";
+      }
 
-    // Compile payload matching your backend handler
-    const payload = {
-      student_id: studentId,
-      os,
-      browser,
-      device_type,
-      screen_resolution,
-      viewport_size,
-      language,
-      timezone,
-      device_memory,
-      cpu_cores,
-      network_type
+      // Compile payload matching your backend handler
+      const payload = {
+        student_id: studentId,
+        os,
+        browser,
+        device_type,
+        screen_resolution,
+        viewport_size,
+        language,
+        timezone,
+        device_memory,
+        cpu_cores,
+        network_type
+      };
+
+      // Send device analytics to your backend handler route
+      fetch('/api/handler', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Device analytics recorded successfully:', data);
+      })
+      .catch(error => {
+        console.error('Failed to record device analytics:', error);
+      });
     };
 
-    // 7. Send via fetch to your backend endpoint URL
-    fetch('https://your-backend-domain.com/api/your-handler', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => response.json())
-    .then(data => {
-      console.log('Device analytics recorded successfully:', data);
-    })
-    .catch(error => {
-      console.error('Failed to record device analytics:', error);
-    });
-  };
-</script>
-    // --- 1. BOUNCING FACE ANIMATION LOGIC ---
+    // 2. BOUNCING FACE ANIMATION LOGIC
     const face = document.getElementById('bouncingFace');
     let x = Math.random() * (window.innerWidth - 120);
     let y = Math.random() * (window.innerHeight - 120);
@@ -292,7 +290,6 @@
       requestAnimationFrame(animateFace);
     }
 
-    // Start face bounce loop
     animateFace();
 
     window.addEventListener('resize', () => {
@@ -300,103 +297,48 @@
       y = Math.min(y, window.innerHeight - 120);
     });
 
-    // --- 2. FORM SUBMISSION & NEON DB integration ---
+    // 3. FORM SUBMISSION LOGIC
     async function submitWish(e) {
-  e.preventDefault();
+      e.preventDefault();
 
-  const nameInput = document.getElementById('senderName');
-  const messageInput = document.getElementById('wishMessage');
-  const submitBtn = document.getElementById('submitBtn');
+      const nameInput = document.getElementById('senderName');
+      const messageInput = document.getElementById('wishMessage');
+      const submitBtn = document.getElementById('submitBtn');
 
-  const name = nameInput.value.trim();
-  const message = messageInput.value.trim();
+      const name = nameInput.value.trim();
+      const message = messageInput.value.trim();
 
-  if (!name || !message) return;
+      if (!name || !message) return;
 
-  // Show visual loading indicator
-  submitBtn.disabled = true;
-  submitBtn.innerText = "Submitting...";
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Submitting...";
 
-  try {
-    const response = await fetch('/api/wish', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ name, message }),
-    });
+      try {
+        const response = await fetch('/api/wish', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name, message }),
+        });
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if (response.ok) {
-      // Hide form & show success UI
-      document.getElementById('formSection').style.display = 'none';
-      document.getElementById('successSection').style.display = 'block';
-
-      // Redirect after 2 seconds (change target URL as needed)
-      
-    } else {
-      alert('Error: ' + (result.error || 'Could not send wish'));
-      submitBtn.disabled = false;
-      submitBtn.innerText = "Send Birthday Wish";
+        if (response.ok) {
+          document.getElementById('formSection').style.display = 'none';
+          document.getElementById('successSection').style.display = 'block';
+        } else {
+          alert('Error: ' + (result.error || 'Could not send wish'));
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Send Birthday Wish";
+        }
+      } catch (err) {
+        console.error('Network error:', err);
+        alert('Network error. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Send Birthday Wish";
+      }
     }
-  } catch (err) {
-    console.error('Network error:', err);
-    alert('Network error. Please try again.');
-    submitBtn.disabled = false;
-    submitBtn.innerText = "Send Birthday Wish";
-  }
-}
   </script>
-
-  <!--
-    ====================================================================
-    VERCEL + NEON DB SERVERLESS API INTEGRATION SETUP INSTRUCTIONS
-    ====================================================================
-
-    1. Neon DB SQL Table Creation:
-       Run this SQL query in your Neon DB Console SQL Editor:
-
-       CREATE TABLE wishes (
-           id SERIAL PRIMARY KEY,
-           name VARCHAR(255) NOT NULL,
-           message TEXT NOT NULL,
-           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-       );
-
-    2. Vercel Serverless Function File (/api/wish.js):
-       Place the following code inside a file named `api/wish.js` in your Vercel project root:
-
-       ------------------------------------------------------------------
-       import { sql } from '@neondatabase/serverless';
-
-       export default async function handler(req, res) {
-         if (req.method !== 'POST') {
-           return res.status(405).json({ error: 'Method not allowed' });
-         }
-
-         const { name, message } = req.body;
-
-         if (!name || !message) {
-           return res.status(400).json({ error: 'Name and wish are required.' });
-         }
-
-         try {
-           await sql`
-             INSERT INTO wishes (name, message)
-             VALUES (${name}, ${message});
-           `;
-           return res.status(200).json({ success: true, message: 'Wish saved successfully!' });
-         } catch (error) {
-           console.error('Database Error:', error);
-           return res.status(500).json({ error: 'Failed to save wish to Neon DB.' });
-         }
-       }
-       ------------------------------------------------------------------
-
-    3. Vercel Environment Variables:
-       In Vercel Project Settings -> Environment Variables, add:
-       DATABASE_URL = "postgres://user:password@ep-something.neon.tech/neondb?sslmode=require"
-  -->
 </body>
 </html>
