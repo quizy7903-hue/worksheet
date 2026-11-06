@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
     } = req.body;
 
     await sql`
-      INSERT INTO student_device_analytics (
+      INSERT INTO student_analytics (
         student_id, os, browser, device_type, screen_resolution, 
         viewport_size, language, timezone, device_memory, cpu_cores, 
         network_type, battery_level, is_charging, downlink_speed, 
